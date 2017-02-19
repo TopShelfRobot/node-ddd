@@ -3,7 +3,7 @@ import exampleInit from '../example/domain';
 import {EventStore} from '../src'
 
 
-describe.only("Example App", () => {
+describe("Example App", () => {
   let eventStore, domain;
   before(done => {
     const InMemoryStrategy = EventStore.strategies.InMemory();

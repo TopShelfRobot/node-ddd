@@ -2,7 +2,7 @@ import Promise from 'bluebird';
 import uuid from 'node-uuid';
 import _isObject from 'lodash/isObject';
 import _isString from 'lodash/isString';
-import {ProjectorPrototype} from './projector';
+import CreateProjector from './projector';
 import CreateRegistry from './handlerRegistry';
 import CreateEvent from './event';
 import {isValidDomain} from './domain';
@@ -40,7 +40,7 @@ const Aggregate = {
 
         const payload = cmd.payload;
 
-        return handler.callback.call(this,payload, currentState);
+        return handler.callback(payload, currentState, this.createEvent);
       })
       .then(events => {
         // TODO: confirm we received a valid event array
@@ -101,8 +101,6 @@ const Aggregate = {
 
 }
 
-const CommandRegistry = CreateRegistry({name: 'command', versionProperty: 'commandVersion'});
-const AggregatePrototype = Object.assign({}, CommandRegistry, ProjectorPrototype, Aggregate);
 
 /**
 * Aggregate Factory
@@ -110,10 +108,17 @@ const AggregatePrototype = Object.assign({}, CommandRegistry, ProjectorPrototype
 * @param {[type]} stream      [description]
 */
 export default function CreateAggregate(aggregateType, options={}) {
+  const Projector = CreateProjector();
+  const CommandRegistry = CreateRegistry({name: 'command', versionProperty: 'commandVersion'});
+  const AggregatePrototype = Object.assign({}, CommandRegistry, Projector, Aggregate);
   const aggregate = Object.create(AggregatePrototype);
 
   aggregate.domain        = null;
   aggregate.aggregateType = aggregateType;
+
+  // createEvent will be injected in to command handlers.  So should be
+  // bound to the aggregate now.
+  aggregate.createEvent = aggregate.createEvent.bind(aggregate);
 
   if (options.domain) aggregate.useDomain(options.domain);
   if (options.commands) aggregate.registerCommands(options.commands);

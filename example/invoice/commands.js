@@ -5,18 +5,18 @@ function lineItemId() {
 }
 
 const invCommands = {
-  createInvoice: function(payload, state) {
+  createInvoice: function(payload, state, createEvent) {
     if (!payload.lineItems || !payload.lineItems.length) {
       throw new Error('Cannot create invoice. At least one line item required');
     }
 
     const events = [];
-    const createEvt = this.createEvent('invoiceCreated', payload);
-    const itemsEvts = payload.lineItems.map(li => this.createEvent('invoiceItemCreated', li));
+    const createEvt = createEvent('invoiceCreated', payload);
+    const itemsEvts = payload.lineItems.map(li => createEvent('invoiceItemCreated', li));
     return events.concat(createEvt, itemsEvts);
   },
 
-  addLineItem: function(payload, state) {
+  addLineItem: function(payload, state, createEvent) {
     if (invoice.status === 'Closed') {
       throw new Error(`Cannot add a line item to a closed invoice`)
     }
@@ -31,7 +31,7 @@ const invCommands = {
     return InvoiceItem.handle(cmd);
   },
 
-  payInvoice: function(payload, state) {
+  payInvoice: function(payload, state, createEvent) {
     if (invoice.status === 'Closed' || invoice.remaining <= 0) {
       throw new Error('Cannot make payment on a closed invoice or an invoice with no remaining balance');
     }
@@ -39,9 +39,9 @@ const invCommands = {
     const paymentToApply = Math.min(payment, invoice.remaining);
     const events = [];
 
-    events.push( this.createEvent('invoicePaymentMade', {payment: paymentToApply}) );
+    events.push( createEvent('invoicePaymentMade', {payment: paymentToApply}) );
     if (invoice.remaining === paymentToApply) {
-      events.push( this.createEvent('invoiceClosed'))
+      events.push( createEvent('invoiceClosed'))
     }
 
     return events;

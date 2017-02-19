@@ -23,8 +23,6 @@ const Projector = {
 }
 
 
-const EventRegistry = CreateRegistry({name: 'event', versionProperty: 'eventVersion'})
-export const ProjectorPrototype = Object.assign({}, EventRegistry, Projector );
 
 
 /**
@@ -36,7 +34,8 @@ export const ProjectorPrototype = Object.assign({}, EventRegistry, Projector );
  *                                        projector's state, given an event
  */
 export default function CreateProjector(options={}) {
-  const projector = Object.create(ProjectorPrototype);
+  const EventRegistry = CreateRegistry({name: 'event', versionProperty: 'eventVersion'})
+  const projector = Object.assign(EventRegistry, Projector );
 
   if (options.events) projector.registerEvents(options.events);
 
