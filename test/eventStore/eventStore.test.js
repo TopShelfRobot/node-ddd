@@ -25,7 +25,7 @@ describe("EventStore", () => {
         aggregateId: 'aggregateId',
         myProp: 'deeply.nested.property',
       }
-      const eventStore = EventStore(mockStrategy, { eventSchema });
+      const eventStore = EventStore.CreateEventStore(mockStrategy, { eventSchema });
       const norm = eventStore.normalizeEvent(evt);
 
       assert.deepStrictEqual(norm, { aggregateId: 'abc', myProp: 123 });
