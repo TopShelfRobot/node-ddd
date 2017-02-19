@@ -18,6 +18,7 @@ describe("Aggregate", () => {
       expect(evt).to.be.ok;
       expect(evt.name).to.equal('test1');
       expect(evt.eventVersion).to.equal(1);
+      expect(evt.createDate).to.be.ok;
       expect(evt.payload).to.deep.equal({a:1});
       expect(evt.meta.b).to.equal(2);
       expect(evt.meta.aggregateType).to.equal('testAgg');
@@ -28,6 +29,7 @@ describe("Aggregate", () => {
       expect(evt).to.be.ok;
       expect(evt.name).to.equal('test1');
       expect(evt.eventVersion).to.equal(1);
+      expect(evt.createDate).to.be.ok;
       expect(evt.payload).to.deep.equal({a:1});
       expect(evt.meta.aggregateType).to.equal('testAgg');
     })
