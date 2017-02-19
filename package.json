@@ -1,0 +1,33 @@
+{
+  "name": "node-domain-es",
+  "version": "0.1.0",
+  "description": "A event sourcing library for NodeJS",
+  "main": "index.js",
+  "dependencies": {
+    "bluebird": "^3.4.6",
+    "debug": "^2.6.0",
+    "dotty": "0.0.2",
+    "enumify": "^1.0.4",
+    "immutable": "^3.8.1",
+    "lodash": "^4.17.2",
+    "moment": "^2.17.0",
+    "node-uuid": "^1.4.7",
+    "tv4": "^1.2.7"
+  },
+  "devDependencies": {
+    "babel-cli": "^6.18.0",
+    "babel-core": "^6.18.2",
+    "babel-eslint": "^7.1.1",
+    "babel-preset-es2015": "^6.18.0",
+    "babel-register": "^6.18.0",
+    "chai": "^3.5.0",
+    "eslint": "^3.13.1",
+    "mocha": "^3.1.2"
+  },
+  "scripts": {
+    "lint": "eslint src test; exit 0",
+    "test": "NODE_ENV=test mocha --compilers js:babel-register --recursive"
+  },
+  "author": "",
+  "license": "ISC"
+}
