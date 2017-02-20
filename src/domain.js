@@ -6,6 +6,7 @@ import Promise from 'bluebird';
 import _isObject from 'lodash/isObject';
 import CreateAggregate, {isValidAggregate} from './aggregate';
 import {isValidRepository} from './repository';
+import {isValidService} from './service';
 import CreateCommand from './command';
 import CreateEvent from './event';
 import CreateTransaction from './transaction';
@@ -106,7 +107,7 @@ const Domain = {
 
 
 
-  
+
 
   /**
    * createEvent
@@ -333,6 +334,27 @@ const Domain = {
   // ---------------------------------------------------------------------------
 
   // ===========================================================================
+  // ==== SERVICE
+  // ===========================================================================
+  addService(service) {
+    if (!isValidService(service)) {
+      throw new Error(`Please pass a valid service`);
+    }
+    this.services[service.name] = service;
+    service.useDomain(this);
+  },
+
+  service(serviceName) {
+    const service = this.services[serviceName];
+    if (!service) {
+      throw new Error(`Unknown service '${serviceName}' in domain ${this.name}`);
+    }
+
+    return service;
+  },
+  // ---------------------------------------------------------------------------
+
+  // ===========================================================================
   // ==== DEPENDENCY INVERSION
   // ===========================================================================
   useRepository: function(repository) {
@@ -359,13 +381,20 @@ const DomainPrototype = Object.assign({}, Domain, EventRegistry, CommandRegistry
 
 
 
-export default function CreateDomain(options={}) {
+export default function CreateDomain(name, options={}) {
+  if (_isObject(name)) {
+    options = name;
+  } else {
+    options.name = name;
+  }
+  
   const domain = Object.create(DomainPrototype);
 
   domain.repository = null;
   domain.publisher = null;
   domain.aggregates = {};
   domain.repositories = {};
+  domain.services = {};
   domain.events = {};
   domain.commands = {};
   domain.name = options.name || path.basename(__dirname);

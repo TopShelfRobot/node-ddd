@@ -1,4 +1,5 @@
 import {expect} from 'chai';
+import assert from 'assert';
 import CreateDomain from '../src/domain';
 
 describe('Domain', () => {
@@ -6,6 +7,14 @@ describe('Domain', () => {
     it('creates a domain object', () => {
       const d = CreateDomain();
       expect(d).to.be.ok;
+    });
+    it('creates a domain with object-only arguments', () => {
+      const d = CreateDomain({name: 'myDomain'});
+      assert.equal(d.name, 'myDomain');
+    });
+    it('creates a domain with string as name', () => {
+      const d = CreateDomain('myDomain', {});
+      assert.equal(d.name, 'myDomain');
     });
   });
 
