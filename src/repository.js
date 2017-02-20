@@ -2,6 +2,7 @@ import uuid from 'node-uuid';
 import Promise from 'bluebird';
 import _isObject from 'lodash/isObject';
 import CreateStream from './stream';
+import DomainUser from './components/domainUser';
 import {isValidAggregate} from './aggregate';
 import {isValidEventStore} from './eventStore';
 import {isValidDomain} from './domain';
@@ -65,22 +66,16 @@ const Repository = {
     return event;
   },
 
-  useDomain(domain) {
-    if (!isValidDomain(domain)) {
-      throw new Error(`Please pass a valid domain to repository`);
-    }
-    this.domain = domain
-  },
 
 }
 
-const RepositoryProto = Object.assign({}, Repository );
 
 
 export default function CreateRepository(eventStore) {
   if (!isValidEventStore(eventStore)) {
     throw new Error(`Please pass a valid eventStore to create a repository`);
   }
+  const RepositoryProto = Object.assign({}, DomainUser(`Repository`), Repository );
   const repo = Object.create(RepositoryProto);
 
   repo.eventStore    = eventStore;

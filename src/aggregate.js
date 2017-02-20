@@ -5,6 +5,7 @@ import _isString from 'lodash/isString';
 import CreateProjector from './projector';
 import CreateRegistry from './handlerRegistry';
 import CreateEvent from './event';
+import DomainUser from './components/domainUser';
 import {isValidDomain} from './domain';
 import {ValidationError} from './errors';
 
@@ -85,15 +86,6 @@ const Aggregate = {
   },
 
 
-  useDomain(domain) {
-    if (!isValidDomain(domain)) {
-      throw new Error(`Please pass a valid domain to aggregate '${this.aggregateType}'`)
-    }
-
-    this.domain = domain;
-  },
-
-
 
 
 
@@ -110,7 +102,7 @@ const Aggregate = {
 export default function CreateAggregate(aggregateType, options={}) {
   const Projector = CreateProjector();
   const CommandRegistry = CreateRegistry({name: 'command', versionProperty: 'commandVersion'});
-  const AggregatePrototype = Object.assign({}, CommandRegistry, Projector, Aggregate);
+  const AggregatePrototype = Object.assign({}, DomainUser(`Aggregate ${aggregateType}`), CommandRegistry, Projector, Aggregate);
   const aggregate = Object.create(AggregatePrototype);
 
   aggregate.domain        = null;

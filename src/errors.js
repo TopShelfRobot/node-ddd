@@ -3,7 +3,7 @@ import util from 'util';
 export function ValidationError(message, validationErrors) {
   validationErrors = validationErrors || [];
   if (!Array.isArray(validationErrors)) validationErrors = [validationErrors];
-  
+
   Error.captureStackTrace(this, this.constructor)
   this.name = this.constructor.name;
 
@@ -14,6 +14,16 @@ export function ValidationError(message, validationErrors) {
   this.message = message;
 }
 util.inherits(ValidationError, Error);
+
+
+
+export function ConfigurationError(message) {
+  Error.captureStackTrace(this, this.constructor)
+  this.name = this.constructor.name;
+  this.message = message;
+  this.status = 500;
+}
+util.inherits(ConfigurationError, Error);
 
 
 export function CommandNotFound(commandType) {
