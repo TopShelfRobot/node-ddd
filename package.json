@@ -1,6 +1,6 @@
 {
   "name": "node-ddd",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "A event sourcing library for NodeJS",
   "main": "./dist/index.js",
   "dependencies": {
