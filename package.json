@@ -2,7 +2,7 @@
   "name": "node-domain-es",
   "version": "0.1.0",
   "description": "A event sourcing library for NodeJS",
-  "main": "index.js",
+  "main": "./dist/index.js",
   "dependencies": {
     "bluebird": "^3.4.6",
     "debug": "^2.6.0",
@@ -28,7 +28,8 @@
   },
   "scripts": {
     "lint": "eslint src test; exit 0",
-    "test": "NODE_ENV=test mocha --compilers js:babel-register --recursive"
+    "test": "NODE_ENV=test mocha --compilers js:babel-register --recursive",
+    "build": "babel src --out-dir dist"
   },
   "author": "",
   "license": "ISC"
