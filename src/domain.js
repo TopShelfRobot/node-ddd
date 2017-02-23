@@ -245,7 +245,7 @@ const Domain = {
         }
       })
       //
-      // Commit
+      // Commit if autocommit is set
       //
       .then(transaction => {
         if (transaction.autoCommit && !transaction.isCommitted()) {
@@ -387,7 +387,7 @@ export default function CreateDomain(name, options={}) {
   } else {
     options.name = name;
   }
-  
+
   const domain = Object.create(DomainPrototype);
 
   domain.repository = null;

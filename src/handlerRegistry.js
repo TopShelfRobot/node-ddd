@@ -1,4 +1,5 @@
 import _capitalize from 'lodash/capitalize';
+import CreateHandlerFactory from './handler';
 import {ValidationError} from './errors';
 
 
@@ -189,8 +190,15 @@ export default function createRegistry(options={}) {
     currentVersions : {},
   });
 
+  const handlerFactory = CreateHandlerFactory({
+    messageType     : name,
+    versionProperty : options.versionProperty,
+    nameProperty    : options.nameProperty,
+  });
+
   const registry = {
     [registryName]                  : inner,
+    [`create${capitalized}Handler`] : (...args) => handlerFactory.apply(null, args),
     [`register${capitalizedPlural}`]: (...args) => inner.registerHandlers.apply(inner, args),
     [`register${capitalized}`]      : (...args) => inner.registerHandler.apply(inner, args),
     [`get${capitalized}Handlers`]   : (...args) => inner.getHandlers.apply(inner, args),
