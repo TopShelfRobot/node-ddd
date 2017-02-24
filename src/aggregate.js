@@ -35,13 +35,9 @@ const Aggregate = {
           throw new Error(`Could not find command handler for '${cmd.name}' v${cmd.commandVersion} on aggregate ${this.aggregateType}`);
         }
 
-        if (typeof handler.callback !== 'function') {
-          throw new Error(`Aggregate '${this.aggregateType}' command handler '${cmd.name}' is missing a callback function`);
-        }
-
         const payload = cmd.payload;
 
-        return handler.callback(payload, currentState, this.createEvent);
+        return handler.execute(payload, currentState, this.createEvent);
       })
       .then(events => {
         // TODO: confirm we received a valid event array
@@ -101,7 +97,7 @@ const Aggregate = {
 */
 export default function CreateAggregate(aggregateType, options={}) {
   const Projector = CreateProjector();
-  const CommandRegistry = CreateRegistry({name: 'command', versionProperty: 'commandVersion'});
+  const CommandRegistry = CreateRegistry({messageType: 'command', versionProperty: 'commandVersion'});
   const AggregatePrototype = Object.assign({}, DomainUser(`Aggregate ${aggregateType}`), CommandRegistry, Projector, Aggregate);
   const aggregate = Object.create(AggregatePrototype);
 
@@ -113,8 +109,8 @@ export default function CreateAggregate(aggregateType, options={}) {
   aggregate.createEvent = aggregate.createEvent.bind(aggregate);
 
   if (options.domain) aggregate.useDomain(options.domain);
-  if (options.commands) aggregate.registerCommands(options.commands);
-  if (options.events) aggregate.registerEvents(options.events);
+  if (options.commands) aggregate.loadCommandHandlers(options.commands);
+  if (options.events) aggregate.loadEventHandlers(options.events);
 
   return aggregate;
 }

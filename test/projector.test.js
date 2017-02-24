@@ -25,7 +25,7 @@ describe("Projector", () => {
 
 
       expect(proj.getEventHandlers()).to.have.length(0)
-      proj.registerEvent(evt);
+      proj.loadEventHandler(evt);
       expect(proj.getEventHandlers()).to.have.length(1)
     })
   });
@@ -36,7 +36,7 @@ describe("Projector", () => {
       const evt = { name: 'evt1', eventVersion: 1, callback: (payload, state) => state + 1, };
       const stream = mockStream([ {name: 'evt1', eventVersion: 1} ], 1)
 
-      proj.registerEvent(evt);
+      proj.loadEventHandler(evt);
       const newState = proj.project(stream);
       expect(newState).to.equal(2);
     });
@@ -56,7 +56,7 @@ describe("Projector", () => {
         {name: 'increment', eventVersion: 1, payload: {amount: 2}},
         {name: 'increment', eventVersion: 1, payload: {amount: 4}},
       ], {count: 0} )
-      proj.registerEvent(evt);
+      proj.loadEventHandler(evt);
 
       const newState = proj.project(stream);
       expect(newState.count).to.equal(7);
@@ -94,7 +94,7 @@ describe("Projector", () => {
       const state = {a: 0, b: 0, c: 0};
       const stream = mockStream(events, state);
 
-      proj.registerEvents(eventHandlers);
+      proj.loadEventHandlers(eventHandlers);
 
       // console.log("HANDLERS", proj.getEventHandlers())
       const newState = proj.project(stream);

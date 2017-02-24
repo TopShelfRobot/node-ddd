@@ -71,7 +71,7 @@ const Domain = {
     });
 
     this.aggregates[aggregateType] = aggregate;
-    this.registerCommands(aggregateCommands);
+    this.registerCommandHandlers(aggregateCommands);
   },
 
   getAggregate: function(aggregateType) {
@@ -375,8 +375,8 @@ const Domain = {
 }
 
 
-const EventRegistry = CreateRegistry({name: 'event', versionProperty: 'eventVersion'});
-const CommandRegistry = CreateRegistry({name: 'command', versionProperty: 'commandVersion'});
+const EventRegistry = CreateRegistry({messageType: 'event', versionProperty: 'eventVersion'});
+const CommandRegistry = CreateRegistry({messageType: 'command', versionProperty: 'commandVersion'});
 const DomainPrototype = Object.assign({}, Domain, EventRegistry, CommandRegistry);
 
 
@@ -399,8 +399,8 @@ export default function CreateDomain(name, options={}) {
   domain.commands = {};
   domain.name = options.name || path.basename(__dirname);
 
-  if (options.events) domain.registerEvents(options.events);
-  if (options.commands) domain.registerCommands(options.commands);
+  if (options.events) domain.loadEventHandlers(options.events);
+  if (options.commands) domain.loadCommandHandlers(options.commands);
 
 
   return domain;

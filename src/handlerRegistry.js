@@ -38,25 +38,25 @@ const defaultVersionStrategies = [
 
 function greaterThan(n) { return v => v>n}
 function lessThan(n) { return v => v<n}
-function getDefaultVersion(strategy, versions, requested) {
+function getDefaultVersion(strategy, handlerVersions, requested) {
   const versionNumbers = Object
-    .keys(versions)
-    .map(v => versions[v].version)
+    .keys(handlerVersions)
+    .map(v => handlerVersions[v].getVersion())
     .sort((a,b) => a-b);
 
   switch(strategy) {
     case 'strict':
       return null;
     case 'latest-version':
-      return (versionNumbers.length) ? versions[versionNumbers[versionNumbers.length-1]] : null;
+      return (versionNumbers.length) ? handlerVersions[versionNumbers[versionNumbers.length-1]] : null;
     case 'first-version':
-      return versions[versionNumbers[0]];
+      return handlerVersions[versionNumbers[0]];
     case 'previous':
       const previous = versionNumbers.filter(lessThan(requested));
-      return (previous.length) ? versions[previous[previous.length-1]] : null;
+      return (previous.length) ? handlerVersions[previous[previous.length-1]] : null;
     case 'next':
       const next = versionNumbers.filter(greaterThan(requested));
-      return (next.length) ? versions[next[0]] : null;
+      return (next.length) ? handlerVersions[next[0]] : null;
     default:
       throw new Error(`Unknown default version strategy '${strategy}'`)
   }
@@ -64,30 +64,33 @@ function getDefaultVersion(strategy, versions, requested) {
 
 const Registry = {
 
-  registerHandlers(pathOrArray) {
-    const handlers = loadFromPathOrArray(pathOrArray);
+  loadHandler(config) {
+    const handler = this.handlerFactory(config);
+    return this.registerHandler(handler);
+  },
 
-    handlers.forEach(handler => this.registerHandler(handler));
-    return this;
+  loadHandlers(pathOrConfig) {
+    const configs = loadFromPathOrArray(pathOrConfig);
+    return configs.map(config => this.loadHandler(config));
+  },
+
+  registerHandlers(handlers) {
+    return handlers.map(handler => this.registerHandler(handler));
   },
 
   registerHandler(handler) {
-    const validationErrors = this.validateHandler(handler);
-    if (validationErrors.length) {
-      throw new ValidationError(`Validation error while registering ${this.text.name}`, validationErrors);
+    if (typeof handler.isValidHandler !== 'function' || !handler.isValidHandler()) {
+      throw new Error(`Please pass a valid handler to register`);
     }
+    const name    = handler.getName();
+    const version = handler.getVersion();
 
-    const handlerName = handler[this.nameProperty];
-    const handlerVersion = handler[this.versionProperty];
+    this.handlers[name] = this.handlers[name] || {};
+    this.handlers[name][version] = handler;
 
+    this.currentVersions[name] = Math.max(this.currentVersions[name] || 0, version);
 
-    this.handlers[handlerName] = this.handlers[handlerName] || {};
-    this.handlers[handlerName][handlerVersion] = handler;
-
-    this.currentVersions[handlerName] = Math.max(this.currentVersions[handlerName] || 0, handlerVersion);
-
-    return this;
-
+    return handler;
   },
 
   /**
@@ -124,14 +127,14 @@ const Registry = {
   getHandler: function(searchObj) {
     const name = searchObj[this.nameProperty];
     const version = searchObj[this.versionProperty];
-    const versions = this.handlers[name];
+    const handlerVersions = this.handlers[name];
 
     // TODO: What happens when version is missing?
 
-    if (!versions) return null;
+    if (!handlerVersions) return null;
 
-    const handler = versions[version];
-    return handler || getDefaultVersion(this.defaultVersion, versions, version);
+    const handler = handlerVersions[version];
+    return handler || getDefaultVersion(this.defaultVersion, handlerVersions, version);
   },
 
   hasHandler: function(name, version) {
@@ -141,15 +144,7 @@ const Registry = {
       : !!handlers;
   },
 
-  validateHandler(handler) {
-    const validationErrors = []
 
-    const requiredFields = [this.nameProperty, this.versionProperty];
-    const missingFields = requiredFields.filter(req => !handler.hasOwnProperty(req) )
-    missingFields.forEach(missing => validationErrors.push(`Missing required '${missing}' field from handler`));
-
-    return validationErrors;
-  },
 
   getVersion(name) {
     const currentVersion = this.currentVersions[name];
@@ -169,42 +164,46 @@ const Registry = {
 
 
 export default function createRegistry(options={}) {
-  const name = (options.name || 'request').toLowerCase();
-  const plural = name + 's';
+  const messageType = (options.messageType || 'message').toLowerCase();
+  const plural = messageType + 's';
   const prop = `_${plural}`;
-  const capitalized = _capitalize(name);
+  const capitalized = _capitalize(messageType);
   const capitalizedPlural = _capitalize(plural);
-  const registryName = `${name}Registry`;
+  const registryName = `${messageType}Registry`;
 
   const defaultVersion = (defaultVersionStrategies.indexOf(options.defaultVersion) !== -1)
     ? options.defaultVersion
     : 'previous'
 
+
+  const handlerFactory = CreateHandlerFactory({
+    messageType     : messageType,
+    versionProperty : options.versionProperty,
+    nameProperty    : options.nameProperty,
+  });
+
   const inner = Object.create(Registry);
   Object.assign(inner, {
-    text            : { name, prop, plural, capitalized, capitalizedPlural, },
+    text            : { messageType, prop, plural, capitalized, capitalizedPlural, },
     defaultVersion  : defaultVersion,
     versionProperty : options.versionProperty || 'version',
     nameProperty    : options.nameProperty || 'name',
     handlers        : {},
     currentVersions : {},
-  });
-
-  const handlerFactory = CreateHandlerFactory({
-    messageType     : name,
-    versionProperty : options.versionProperty,
-    nameProperty    : options.nameProperty,
+    handlerFactory  : handlerFactory,
   });
 
   const registry = {
-    [registryName]                  : inner,
-    [`create${capitalized}Handler`] : (...args) => handlerFactory.apply(null, args),
-    [`register${capitalizedPlural}`]: (...args) => inner.registerHandlers.apply(inner, args),
-    [`register${capitalized}`]      : (...args) => inner.registerHandler.apply(inner, args),
-    [`get${capitalized}Handlers`]   : (...args) => inner.getHandlers.apply(inner, args),
-    [`get${capitalized}Handler`]    : (...args) => inner.getHandler.apply(inner, args),
-    [`has${capitalized}Handler`]    : (...args) => inner.hasHandler.apply(inner, args),
-    [`get${capitalized}Version`]    : (...args) => inner.getVersion.apply(inner, args),
+    [registryName]                    : inner,
+    [`create${capitalized}Handler`]   : (...args) => inner.handlerFactory.apply(inner, args),
+    [`register${capitalized}Handlers`]: (...args) => inner.registerHandlers.apply(inner, args),
+    [`register${capitalized}Handler`] : (...args) => inner.registerHandler.apply(inner, args),
+    [`load${capitalized}Handlers`]    : (...args) => inner.loadHandlers.apply(inner, args),
+    [`load${capitalized}Handler`]     : (...args) => inner.loadHandler.apply(inner, args),
+    [`get${capitalized}Handlers`]     : (...args) => inner.getHandlers.apply(inner, args),
+    [`get${capitalized}Handler`]      : (...args) => inner.getHandler.apply(inner, args),
+    [`has${capitalized}Handler`]      : (...args) => inner.hasHandler.apply(inner, args),
+    [`get${capitalized}Version`]      : (...args) => inner.getVersion.apply(inner, args),
   };
 
   return registry;

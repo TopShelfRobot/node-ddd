@@ -1,6 +1,7 @@
 const tv4 = require('tv4');
 const _capitalize = require('lodash/capitalize');
-
+const _isBoolean = require('lodash/isBoolean');
+import {ValidationError} from './errors';
 
 const Handler = {
   validateConfig(config) {
@@ -9,10 +10,19 @@ const Handler = {
     const missingFields = requiredFields.filter(fld => !config.hasOwnProperty(fld));
 
     if (missingFields.length) {
-      validationErrors.push(`Missing required fields for ${capitalMessageType} handler: [${missingFields.join(',')}]`);
+      validationErrors.push(`Missing required fields for ${this.capitalMessageType} handler: [${missingFields.join(',')}]`);
     }
 
+    this._isValidHander = !validationErrors.length;
+
     return validationErrors;
+  },
+
+  isValidHandler() {
+    if (!_isBoolean(this._isValidHander)) {
+      this.validateConfig(this.config);
+    }
+    return this._isValidHander;
   },
 
   _validateMessage(message) {
@@ -59,19 +69,21 @@ export default function CreateHandlerFactory(options) {
     const handler = Object.create(Handler);
 
     Object.assign(handler, {
-      messageType,
-      capitalMessageType,
-      versionProperty,
-      nameProperty,
+      messageType, capitalMessageType, versionProperty, nameProperty,
       config,
-      payloadSchema: {type: 'object'},
-      [nameProperty]: options[nameProperty],
-      [versionProperty]: options[versionProperty],
-      [`validate${capitalMessageType}`] = handler._validateMessage.bind(handler);
+      payloadSchema                    : {type: 'object'},
+      [nameProperty]                   : config[nameProperty],
+      [versionProperty]                : config[versionProperty],
+      [`validate${capitalMessageType}`]: handler._validateMessage.bind(handler),
     })
 
     if (config.schema) {
       handler.payloadSchema = Object.assign(handler.payloadSchema, config.schema);
+    }
+
+    const validationErrors = handler.validateConfig(config);
+    if (validationErrors.length) {
+      throw new ValidationError(`Cannot create ${messageType} handler`, validationErrors);
     }
 
     return handler;

@@ -16,7 +16,7 @@ const Projector = {
         throw new Error(`Could not find event handler for ${evt.name} version ${evt.eventVersion}`);
       }
 
-      return eventHandler.callback(evt.payload, state) || state;
+      return eventHandler.execute(evt.payload, state) || state;
     }, initialState);
   },
 
@@ -34,10 +34,10 @@ const Projector = {
  *                                        projector's state, given an event
  */
 export default function CreateProjector(options={}) {
-  const EventRegistry = CreateRegistry({name: 'event', versionProperty: 'eventVersion'})
+  const EventRegistry = CreateRegistry({messageType: 'event', versionProperty: 'eventVersion'})
   const projector = Object.assign(EventRegistry, Projector );
 
-  if (options.events) projector.registerEvents(options.events);
+  if (options.events) projector.loadEventHandlers(options.events);
 
   return projector;
 }
