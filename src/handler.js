@@ -59,7 +59,7 @@ const Handler = {
 }
 
 
-export default function CreateHandlerFactory(options) {
+export default function CreateHandlerFactory(options={}) {
   const messageType     = options.messageType || 'message';
   const versionProperty = options.versionProperty || 'version';
   const nameProperty    = options.nameProperty || 'name';
