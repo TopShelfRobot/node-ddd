@@ -2,23 +2,25 @@ import CreateRegistry from './handlerRegistry';
 
 const Projector = {
   project(...args) {
-    return this._project.apply(this, args);
+    return this.projectStream.apply(this, args);
   },
 
-  _project: function(stream) {
+  projectStream(stream) {
     const initialState = stream.getCurrentState();
     const events = stream.getEvents();
 
-    return events.reduce((state, evt) => {
-      const eventHandler = this.getEventHandler(evt);
-
-      if (!eventHandler) {
-        throw new Error(`Could not find event handler for ${evt.name} version ${evt.eventVersion}`);
-      }
-
-      return eventHandler.execute(evt.payload, state) || state;
-    }, initialState);
+    return events.reduce(this.projectEvent.bind(this), initialState);
   },
+
+  projectEvent(state, evt) {
+    const eventHandler = this.getEventHandler(evt);
+
+    if (!eventHandler) {
+      throw new Error(`Could not find event handler for ${evt.name} version ${evt.eventVersion}`);
+    }
+    return eventHandler.execute(evt.payload, state) || state;
+  }
+
 
 }
 
