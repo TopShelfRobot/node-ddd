@@ -1,4 +1,4 @@
-{
+module.exports = {
   "parser": "babel-eslint",
 
   // http://eslint.org/docs/rules/
@@ -43,6 +43,7 @@
   },
 
   "plugins": [
+    "babel",
     // e.g. "react" (must run `npm install eslint-plugin-react` first)
   ],
 
@@ -83,6 +84,7 @@
     "complexity": 0,            // specify the maximum cyclomatic complexity allowed in a program (off by default)
     "consistent-return": 0,     // require return statements to either always or never specify values
     "curly": 0,                 // specify curly brace conventions for all control statements
+    "object-curly-spacing": 0,
     "default-case": 0,          // require default case in switch statements (off by default)
     "dot-notation": 0,          // encourages use of dot notation whenever possible
     "eqeqeq": 0,                // require the use of === and !==
@@ -219,6 +221,17 @@
     "max-params": 0,      // limits the number of parameters that can be used in the function declaration. (off by default)
     "max-statements": 0,  // specify the maximum number of statement allowed in a function (off by default)
     "no-bitwise": 0,      // disallow use of bitwise operators (off by default)
-    "no-plusplus": 0      // disallow use of unary operators, ++ and -- (off by default)
+    "no-plusplus": 0,     // disallow use of unary operators, ++ and -- (off by default)
+
+
+    ////////// BABEL //////////
+
+
+    "babel/new-cap": 0,
+    "babel/object-curly-spacing": 0,
+    "babel/no-await-in-loop": 1,
+    "babel/flow-object-type": 1,
+    "babel/no-invalid-this": 1
+
   }
 }

@@ -10,9 +10,6 @@ const Projection = {
     })
   },
 
-  applyHandlerToEvent(handler) {
-    return function(payload)
-  },
 
 
 

@@ -49,7 +49,7 @@ describe("Projector", () => {
         callback: function(payload, state) {
           state.count += payload.amount;
           return state
-        }
+        },
       }
       const stream = mockStream([
         {name: 'increment', eventVersion: 1, payload: {amount: 1}},
@@ -69,21 +69,21 @@ describe("Projector", () => {
           eventVersion: 1,
           callback: function(payload, state) {
             state.a += payload.amount;
-          }
+          },
         },
         {
           name: 'increment',
           eventVersion: 2,
           callback: function(payload, state) {
             state.b += payload.amount;
-          }
+          };
         },
         {
           name: 'increment',
           eventVersion: 3,
           callback: function(payload, state) {
             state.c += payload.amount;
-          }
+          };
         }
       ];
       const events = [
