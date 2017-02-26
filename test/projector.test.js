@@ -76,14 +76,14 @@ describe("Projector", () => {
           eventVersion: 2,
           callback: function(payload, state) {
             state.b += payload.amount;
-          };
+          },
         },
         {
           name: 'increment',
           eventVersion: 3,
           callback: function(payload, state) {
             state.c += payload.amount;
-          };
+          },
         }
       ];
       const events = [

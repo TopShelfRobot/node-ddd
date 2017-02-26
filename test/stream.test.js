@@ -117,4 +117,13 @@ describe("Stream", () => {
 
     })
   })
+
+  describe("Getting current state", () => {
+    it("aggregateType and aggregateId are in the initial State", () => {
+      const stream = CreateStream({aggregateId, aggregateType});
+      const state = stream.getCurrentState();
+      assert.equal(state.aggregateId, aggregateId);
+      assert.equal(state.aggregateType, aggregateType);
+    })
+  })
 });

@@ -370,7 +370,7 @@ const Domain = {
   },
   // ---------------------------------------------------------------------------
   init() {
-    return Promise.resolve(this);
+    return Promise.resolve();
   }
 }
 

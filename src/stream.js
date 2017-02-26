@@ -182,7 +182,10 @@ const Stream = {
     if (this.snapshot && this.snapshot.state) {
       return _cloneDeep(this.snapshot.state);
     } else {
-      return {};
+      return {
+        aggregateId: this.aggregateId,
+        aggregateType: this.aggregateType,
+      };
     }
   },
 

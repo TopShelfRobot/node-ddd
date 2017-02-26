@@ -12,9 +12,9 @@ describe("Message Handler", () => {
 
   describe("Message handler factory", () => {
     let CreateHandler;
-    before() {
+    before(() => {
       CreateHandler = CreateHandlerFactory();
-    }
+    })
 
     describe("Creating handlers", () => {
 
