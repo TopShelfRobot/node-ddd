@@ -3,13 +3,6 @@ import {ConfigurationError} from './errors';
 import CreateProjector from './projector';
 
 const Projection = {
-  subscribeToEvents(handlers) {
-    handlers.forEach(handler => {
-      const eventName = handler.getName();
-      this.messageBus.onEvent(eventName, this.runHandler(handler))
-    })
-  },
-
 
 
 
@@ -50,7 +43,7 @@ export default function CreateProjection(name, options) {
   const projector = CreateProjector();
 
   // Ensure that each event handler has an onComplete method
-  const missingOnComplete = events
+  const missingOnComplete = options.events
     .filter(evt => typeof evt.onComplete !== 'function')
     .map(config => projector.eventRegistry.extractname(config));
   if (missingOnComplete.length) {
@@ -62,7 +55,6 @@ export default function CreateProjection(name, options) {
   projection.name = name;
   projection.projector = projector;
   projection.projector.loadEventHandlers(options.events);
-  projection.subscribeToEvents(projection.projector.getEventHandlers());
 
   projection.eventList = projection.projector.getEventHandlers().map(handler => handler.getName());
 
