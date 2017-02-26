@@ -14,7 +14,7 @@ const Projection = {
    * @param  {Event} evt The event to handle
    * @return {Object}     Resolves to the new state
    */
-  handleEvent(evt) {
+  projectEvent(evt) {
     const eventHandler = this.projector.getEventHandler(evt);
     if (!eventHandler) { return Promise.resolve(); }
 
@@ -22,6 +22,10 @@ const Projection = {
       .then(currentState => eventHandler.execute(evt.payload, currentState) || currentState)
       .tap(newState => eventHandler.onComplete(newState, evt))
       .tap(newState => this.onComplete(newState, evt));
+  },
+
+  getState(evt) {
+    return Promise.resolve(this._getState(evt));
   },
 
   onComplete(state, evt) { },
@@ -32,11 +36,16 @@ const Projection = {
 }
 
 export default function CreateProjection(name, options) {
+  options = options || {};
+
   if (typeof name !== 'string') {
     throw new ConfigurationError(`Projection 'name' must be a stirng`);
   }
   if (!options.events) {
     throw new ConfigurationError(`Missing 'events' property from Projection creation`);
+  }
+  if (typeof options.getState !== 'function') {
+    throw new ConfigurationError(`Missing 'getState' function or 'getState' is not a function`);
   }
 
   // TODO: move 'required methods' in to the projector or event registry
@@ -45,7 +54,7 @@ export default function CreateProjection(name, options) {
   // Ensure that each event handler has an onComplete method
   const missingOnComplete = options.events
     .filter(evt => typeof evt.onComplete !== 'function')
-    .map(config => projector.eventRegistry.extractname(config));
+    .map(config => projector.eventRegistry.extractName(config));
   if (missingOnComplete.length) {
     throw new ConfigurationError(`These event handlers are missing an onComplete method: [${missingOnComplete.join(',')}]`)
   }
@@ -53,6 +62,7 @@ export default function CreateProjection(name, options) {
 
   const projection = Object.create(Projection);
   projection.name = name;
+  projection._getState = options.getState;
   projection.projector = projector;
   projection.projector.loadEventHandlers(options.events);
 
