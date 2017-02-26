@@ -34,4 +34,5 @@ describe("Aggregate", () => {
       expect(evt.meta.aggregateType).to.equal('testAgg');
     })
   })
+
 })

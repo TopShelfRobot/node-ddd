@@ -34,10 +34,11 @@ const Aggregate = {
         if (!handler) {
           throw new Error(`Could not find command handler for '${cmd.name}' v${cmd.commandVersion} on aggregate ${this.aggregateType}`);
         }
+        if (currentState.aggregateType !== this.aggregateType) {
+          throw new Error(`Aggregate is of wrong type for this command: state(${currentState.aggregateType}) aggregate(${this.aggregateType})`);
+        }
 
-        const payload = cmd.payload;
-
-        return handler.execute(payload, currentState, this.createEvent);
+        return handler.execute(cmd, currentState, this.createEvent);
       })
       .then(events => {
         // TODO: confirm we received a valid event array
@@ -47,6 +48,7 @@ const Aggregate = {
       .then(events => stream.addEvents(events) )
 
   },
+
   // ---------------------------------------------------------------------------
 
 
