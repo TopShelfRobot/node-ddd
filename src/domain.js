@@ -365,8 +365,8 @@ const Domain = {
     repository.useDomain(this);
   },
 
-  usePublisher: function() {
-
+  usePublisher: function(publisher) {
+    this.publisher = publisher
   },
   // ---------------------------------------------------------------------------
   init() {

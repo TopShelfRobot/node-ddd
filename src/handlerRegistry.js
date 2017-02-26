@@ -152,6 +152,10 @@ const Registry = {
       throw new Error(`Cannot get current version of unknown handler '${name}'`);
     }
     return currentVersion;
+  },
+
+  extractName(obj) {
+    return obj[this.nameProperty];
   }
 }
 
