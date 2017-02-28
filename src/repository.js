@@ -58,6 +58,9 @@ const Repository = {
     return this.eventStore.saveEvents(aggregateId, events)
       .map(evt => this.domain.publish(evt))
       .then(() => stream.commitAllEvents())
+      .catch(err => {
+        throw new Error(err.message);
+      });
   },
 
   publish: function(event) {

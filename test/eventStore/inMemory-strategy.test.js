@@ -124,6 +124,10 @@ describe('In-Memory eventStore strategy', () => {
       strat.saveEvents(aggregateId, events);
       assert(strat.getEvents(aggregateId).length === 2)
     })
+
+    it("returns the array of events after saving", () => {
+      assert(false);
+    });
   })
 
 })

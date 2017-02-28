@@ -107,7 +107,8 @@ const EventStore = {
 
     events = events.map(evt => this.normalizeEvent(evt));
 
-    return Promise.try(() => this.strategy.saveEvents(aggregateId, events));
+    return Promise.try(() => this.strategy.saveEvents(aggregateId, events))
+      .then(events => events || []);
   },
 
   getLastCommittedVersion: function(...args) {
