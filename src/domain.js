@@ -377,6 +377,10 @@ const Domain = {
   // ---------------------------------------------------------------------------
   init() {
     return Promise.resolve(this);
+  },
+
+  newId() {
+    return uuid.v4();
   }
 }
 
