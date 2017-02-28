@@ -96,7 +96,6 @@ const Strategy = {
     const limitClause =(_isNumber(options.limit) && options.limit > 0)
       ? `LIMIT ${options.limit}`
       : '';
-    }
 
     const sql = `SELECT * FROM ${this.eventTableName} WHERE ${whereClause.join(' AND ')} ${orderClause} ${limitClause}`
 
@@ -112,7 +111,7 @@ const PgStrategy = Object.assign({}, BaseStrategyPrototype, Strategy);
 
 
 export default function CreatePg(config) {
-  const requiredFields = [ 'eventTableName', 'snapshotTableName', 'db', ];
+  const requiredFields = [ 'db' ];
   const missingFields = requiredFields.filter(fld => !config[fld]);
   if (missingFields.length) {
     throw new ConfigurationError(`PG EventStore Strategy: missing fields [${missingFields.join(',')}]`);
