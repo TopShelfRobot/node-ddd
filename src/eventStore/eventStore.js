@@ -98,14 +98,14 @@ const EventStore = {
     if (!events.length) return Promise.resolve();
     if (!Array.isArray(events)) events = [events];
 
-    events = events.map(evt => this.normalizeEvent(evt));
-
     // Check that all events are for the same aggregateId
     // Get the aggregateId
     const wrongAggId = events.filter(evt => evt.meta.aggregateId !== aggregateId);
     if (wrongAggId.length) {
       throw new Error(`Multiple aggregateIds found in the event stream to be saved`);
     }
+
+    events = events.map(evt => this.normalizeEvent(evt));
 
     return Promise.try(() => this.strategy.saveEvents(aggregateId, events));
   },

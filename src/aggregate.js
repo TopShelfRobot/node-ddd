@@ -38,7 +38,7 @@ const Aggregate = {
           throw new Error(`Aggregate is of wrong type for this command: state(${currentState.aggregateType}) aggregate(${this.aggregateType})`);
         }
 
-        const customCreateEvent = createEventForCommand(cmd);
+        const customCreateEvent = this.createEventForCommand(cmd);
 
         return handler.execute(cmd, currentState, customCreateEvent);
       })
@@ -56,7 +56,7 @@ const Aggregate = {
 
   createEventForCommand(cmd) {
     const cmdMeta = cmd.meta || {};
-    
+
     const customCreateEvent = (name, eventVersion, payload, meta={}) => {
       if (typeof eventVersion !== 'number') {
         meta = payload;
