@@ -17,7 +17,7 @@ const EventStore = {
   normalizeEvent(evt) {
     if (!this.eventSchema) return evt;
 
-    return Object.keys(this.eventSchema).reduce((normalized, field) => {
+    const normEvt = Object.keys(this.eventSchema).reduce((normalized, field) => {
       const eventPath = this.eventSchema[field];
 
       let value;
@@ -36,6 +36,7 @@ const EventStore = {
       dotty.put(normalized, field, value);
       return normalized;
     }, {});
+    return normEvt;
   },
 
   /**
@@ -135,12 +136,6 @@ export default function CreateEventStore(strategy, options={}) {
   isValidStrategy(strategy);
 
   const eventStore = Object.create(EventStorePrototype);
-
-  const eventSchema = options.eventSchema || {
-    name   : 'name',
-    version: 'version',
-    payload: 'payload',
-  };
 
   eventStore.strategy        = strategy;
   eventStore.eventSchema     = options.eventSchema;

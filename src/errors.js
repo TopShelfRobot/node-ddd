@@ -41,3 +41,15 @@ export function InvalidOperationError(message) {
   this.status = 400;
 }
 util.inherits(InvalidOperationError, Error);
+
+export function SQLError(sql, original={}) {
+  Error.captureStackTrace(this, this.constructor)
+  this.name = this.constructor.name;
+  this.message = "SQL Error: " + (original.message) ? "\n\t" + original.message : '';
+  this.status = 500;
+  this.sql = sql;
+  this.sqlError
+  this.severity = original.severity;
+  this.code = original.code;
+}
+util.inherits(SQLError, Error);

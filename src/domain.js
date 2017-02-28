@@ -365,6 +365,12 @@ const Domain = {
     repository.useDomain(this);
   },
 
+  normalizeEvent: function(evt) {
+    if (this.repository && this.repository.eventStore) {
+      return this.repository.eventStore.normalizeEvent(evt);
+    }
+  },
+
   usePublisher: function(publisher) {
     this.publisher = publisher
   },

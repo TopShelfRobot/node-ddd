@@ -1,7 +1,7 @@
 import _isDate from 'lodash/isDate';
 import _isNumber from 'lodash/isNumber';
 import BaseStrategyPrototype from './baseStrategy';
-import {ConfigurationError} from '../../errors';
+import {ConfigurationError, SQLError} from '../../errors';
 
 const PgPromise = require('pg-promise');
 const PQ = PgPromise.ParameterizedQuery;
@@ -29,8 +29,7 @@ const Strategy = {
 
     return this.db.none(sql)
       .catch(err => {
-        err.sql = sql;
-        throw err;
+        throw new SQLError(sql, err);
       })
 
   },
@@ -58,9 +57,11 @@ const Strategy = {
       throw new Error(`getSnapshotBefore: unknown marker type: ${typeof marker}`);
     }
 
-    return this.db.oneOrNone(sql, [aggregateId, marker])
+    const query = new PQ(sql, [aggregateId, marker]);
+
+    return this.db.oneOrNone(query)
       .catch(err => {
-        err.sql = sql;
+        err.sql = query.toString();
         throw err;
       })
   },
@@ -69,7 +70,7 @@ const Strategy = {
     const start = options.start || 0;
     const end = options.end;
 
-    const whereClause = ['aggregateId=$[aggregateId]'];
+    const whereClause = ['aggregate_id=$[aggregateId]'];
     const values = {aggregateId};
 
     if (_isNumber(options.start))  {
@@ -99,10 +100,9 @@ const Strategy = {
 
     const sql = `SELECT * FROM ${this.eventTableName} WHERE ${whereClause.join(' AND ')} ${orderClause} ${limitClause}`
 
-    return this.db.and(sql, values)
+    return this.db.any(sql, values)
       .catch(err => {
-        err.sql = sql;
-        throw err;
+        throw new SQLError(sql, err);
       })
   },
 }
