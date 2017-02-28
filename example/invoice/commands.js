@@ -5,7 +5,8 @@ function lineItemId() {
 }
 
 const invCommands = {
-  createInvoice: function(payload, state, createEvent) {
+  createInvoice: function(cmd, state, createEvent) {
+    const {payload} = cmd;
     if (!payload.lineItems || !payload.lineItems.length) {
       throw new Error('Cannot create invoice. At least one line item required');
     }
@@ -16,7 +17,7 @@ const invCommands = {
     return events.concat(createEvt, itemsEvts);
   },
 
-  addLineItem: function(payload, state, createEvent) {
+  addLineItem: function(cmd, state, createEvent) {
     if (invoice.status === 'Closed') {
       throw new Error(`Cannot add a line item to a closed invoice`)
     }
@@ -31,7 +32,7 @@ const invCommands = {
     return InvoiceItem.handle(cmd);
   },
 
-  payInvoice: function(payload, state, createEvent) {
+  payInvoice: function(cmd, state, createEvent) {
     if (invoice.status === 'Closed' || invoice.remaining <= 0) {
       throw new Error('Cannot make payment on a closed invoice or an invoice with no remaining balance');
     }

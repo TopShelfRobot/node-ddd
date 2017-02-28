@@ -196,6 +196,9 @@ const Stream = {
   getVersion: function() {
     return this.version;
   },
+  getAggregateId: function() {
+    return this.aggregateId;
+  },
   /**
    * Returns the version of the stream which has been committed
    * @return {Number} Committed version of the stream

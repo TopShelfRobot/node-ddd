@@ -21,11 +21,12 @@ const Strategy = {
 
   },
   saveEvents: function(aggregateId, events) {
+    
 
     const firstVersionToSave = events[0].version;
     const lastVersion = this.getLastCommittedVersion(aggregateId, {limit: 1, order: 'desc'});
     if (lastVersion >= firstVersionToSave) {
-      throw new Error(`Concurrency error.  Attempting to save stream starting at version ${firstVersionToSave} when stream already at ${lastVersion}`);
+      throw new Error(`Concurrency error for aggregate ${aggregateId}.  Attempting to save stream starting at version ${firstVersionToSave} when stream already at ${lastVersion}`);
     }
 
     events.forEach(evt => this._events.push(evt) );

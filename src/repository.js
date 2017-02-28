@@ -53,8 +53,9 @@ const Repository = {
   save: function(stream) {
     // TODO: Catch concurrency errors and handle them
     const events = stream.getUncomittedEvents();
+    const aggregateId = stream.getAggregateId();
 
-    return this.eventStore.saveEvents(events)
+    return this.eventStore.saveEvents(aggregateId, events)
       .map(evt => this.domain.publish(evt))
       .then(() => stream.commitAllEvents())
   },

@@ -3,7 +3,7 @@ import {CreateProjection} from '../src';
 
 const getState = () => {};
 
-describe.only("Projection", () => {
+describe("Projection", () => {
   describe("creating a projection", () => {
     it("creates a projection", () => {
       const events = [

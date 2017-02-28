@@ -24,10 +24,14 @@ describe('In-Memory eventStore strategy', () => {
   describe("getEvents", () => {
     const strat = InMemory();
     const aggregateId = 'abc';
+    const aggregateId2 = 'def';
 
     before(() => {
       strat.init();
       strat._events = [
+        {aggregateId: aggregateId2, created: new Date(2017, 1, 1), version: 1},
+        {aggregateId: aggregateId2, created: new Date(2017, 1, 2), version: 2},
+        {aggregateId: aggregateId2, created: new Date(2017, 1, 3), version: 3},
         {aggregateId: aggregateId, created: new Date(2017, 1, 1), version: 1},
         {aggregateId: aggregateId, created: new Date(2017, 1, 2), version: 2},
         {aggregateId: aggregateId, created: new Date(2017, 1, 3), version: 3},
