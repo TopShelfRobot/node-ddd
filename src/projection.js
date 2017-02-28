@@ -26,7 +26,7 @@ const Projection = {
 
   getState(evt) {
     return Promise.resolve(this.options.getState(evt))
-      .then(state => state || this.options.initialState);
+      .then(state => state || this.options.initialState || {});
   },
 
   onComplete(state, evt) { },
@@ -44,9 +44,6 @@ export default function CreateProjection(name, options) {
   }
   if (!options.events) {
     throw new ConfigurationError(`Missing 'events' property from Projection '${name}' creation`);
-  }
-  if (!options.initialState) {
-    throw new ConfigurationError(`Missing 'initialState' property from Projection '${name}' creation`);
   }
   if (typeof options.getState !== 'function') {
     throw new ConfigurationError(`Missing 'getState' function or 'getState' is not a function from Projection '${name}' creation`);
