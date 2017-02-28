@@ -55,6 +55,11 @@ const Handler = {
   execute(...args) {
     return this.config.callback.apply(this, args);
   },
+  onComplete(...args) {
+    if (this.config.onComplete) {
+      return this.config.onComplete.apply(this, args);
+    }
+  },
 
 }
 
