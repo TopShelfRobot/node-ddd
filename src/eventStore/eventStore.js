@@ -15,10 +15,16 @@ const EventStore = {
    * @return {Object}     The normalized event object
    */
   normalizeEvent(evt) {
-    if (!this.eventSchema) return evt;
+    if (!this.eventSchema || !this.eventSchema.properties) return evt;
 
-    const normEvt = Object.keys(this.eventSchema).reduce((normalized, field) => {
-      const eventPath = this.eventSchema[field];
+
+    const {properties, required=[]} =  this.eventSchema;
+    const normEvt = Object.keys(properties).reduce((normalized, field) => {
+      const eventPath = properties[field].path;
+
+      if (!eventPath) {
+        throw new ConfigurationError(`Event Schema for '${field}' is missing required 'path' property`);
+      }
 
       let value;
       if (eventPath === '{date}') {
@@ -27,7 +33,7 @@ const EventStore = {
         value = dotty.get(evt, eventPath);
       }
 
-      if (value === undefined || value === null) {
+      if (required.indexOf(field) >= 0 && (value === undefined || value === null)) {
         const err = new Error(`Event is missing value for field ${field} at path ${eventPath}`);
         debug(err);
         throw(err);

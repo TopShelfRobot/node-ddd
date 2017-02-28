@@ -21,9 +21,14 @@ describe("EventStore", () => {
         aggregateId: 'abc',
         deeply: {nested: {property: 123}}
       };
+
       const eventSchema = {
-        aggregateId: 'aggregateId',
-        myProp: 'deeply.nested.property',
+        type: 'object',
+        properties: {
+          aggregateId: {type: 'string', path: 'aggregateId'},
+          myProp     : {type: 'number', path: 'deeply.nested.property'},
+        },
+        required: ['aggregateId', 'myProp']
       }
       const eventStore = EventStore.CreateEventStore(mockStrategy, { eventSchema });
       const norm = eventStore.normalizeEvent(evt);
