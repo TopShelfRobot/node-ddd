@@ -38,7 +38,9 @@ const Aggregate = {
           throw new Error(`Aggregate is of wrong type for this command: state(${currentState.aggregateType}) aggregate(${this.aggregateType})`);
         }
 
-        return handler.execute(cmd, currentState, this.createEvent);
+        const customCreateEvent = createEventForCommand(cmd);
+
+        return handler.execute(cmd, currentState, customCreateEvent);
       })
       .then(events => {
         // TODO: confirm we received a valid event array
@@ -52,17 +54,25 @@ const Aggregate = {
   // ---------------------------------------------------------------------------
 
 
+  createEventForCommand(cmd) {
+    const cmdMeta = cmd.meta || {};
+    
+    const customCreateEvent = (name, eventVersion, payload, meta={}) => {
+      if (typeof eventVersion !== 'number') {
+        meta = payload;
+        payload = eventVersion;
+        eventVersion = null;
+      }
+      meta = Object.assign({}, cmdMeta, meta || {});
+      payload = payload || {};
 
-  createEvent(name, eventVersion, payload, meta={}) {
-    if (typeof eventVersion !== 'number') {
-      meta = payload;
-      payload = eventVersion;
-      eventVersion = null;
+      return this.createEvent(name, eventVersion, payload, meta);
     }
 
-    meta = meta || {};
-    payload = payload || {};
+    return customCreateEvent;
+  },
 
+  createEvent(name, eventVersion, payload, meta={}) {
     if (!this.hasEventHandler(name)) {
       throw new ValidationError(`Error creating event`, `Unknown event name '${name}' for aggregate '${this.aggregateType}'`);
     }

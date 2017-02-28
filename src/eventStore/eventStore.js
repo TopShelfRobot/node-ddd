@@ -23,7 +23,7 @@ const EventStore = {
       const eventPath = properties[field].path;
 
       if (!eventPath) {
-        throw new ConfigurationError(`Event Schema for '${field}' is missing required 'path' property`);
+        throw new ConfigurationError(`Event Schema for '${field}' is missing required 'path' property`, {event: evt});
       }
 
       let value;

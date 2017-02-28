@@ -17,11 +17,12 @@ util.inherits(ValidationError, Error);
 
 
 
-export function ConfigurationError(message) {
+export function ConfigurationError(message, data={}) {
   Error.captureStackTrace(this, this.constructor)
   this.name = this.constructor.name;
   this.message = message;
   this.status = 500;
+  Object.assign(this, data);
 }
 util.inherits(ConfigurationError, Error);
 

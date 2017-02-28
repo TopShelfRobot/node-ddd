@@ -1,3 +1,4 @@
+import assert from 'assert';
 import {expect} from 'chai';
 import CreateAggregate from '../src/aggregate';
 
@@ -24,15 +25,25 @@ describe("Aggregate", () => {
       expect(evt.meta.aggregateType).to.equal('testAgg');
     })
 
-    it("Creates an event with only name and payload", () => {
-      const evt = agg.createEvent('test1', {a:1});
-      expect(evt).to.be.ok;
-      expect(evt.name).to.equal('test1');
-      expect(evt.eventVersion).to.equal(1);
-      expect(evt.createDate).to.be.ok;
-      expect(evt.payload).to.deep.equal({a:1});
-      expect(evt.meta.aggregateType).to.equal('testAgg');
-    })
   })
 
+  describe("createEventForCommand()", () => {
+    it("returns a function", () => {
+      const agg = CreateAggregate('testAgg');
+      const cmd = {meta: {a: 1, b: 2}};
+      const customCreateEvent = agg.createEventForCommand(cmd);
+      assert.equal(typeof customCreateEvent, 'function');
+    })
+    it("returned function will merge metas", () => {
+      const agg = CreateAggregate('testAgg', {
+        events: [
+          {name: 'test1', eventVersion: 1, callback: () => {}}
+        ]
+      });
+      const cmd = {meta: {a: 1, b: 2}};
+      const customCreateEvent = agg.createEventForCommand(cmd);
+      const evt = customCreateEvent('test1', {pay: 'load'}, {c:3});
+      assert.deepEqual(evt.meta, {a:1,b:2,c:3, aggregateType: 'testAgg', domain: null});
+    })
+  })
 })
