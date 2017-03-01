@@ -276,8 +276,13 @@ const Domain = {
     const aggregateId = command.meta.aggregateId;
     const aggregate = this.getAggregate(aggregateType);
 
+    const domainMeta = {
+      domain: {name: this.name},
+    };
+
     // Basic workflow
     return Promise.resolve()
+      // Sanity checks (Are they needed?)
       .then(() => {
         if (!aggregate) {
           throw new Error(`Default Command Execution: Unknown aggregate type: ${aggregateType}`);
@@ -287,9 +292,15 @@ const Domain = {
           throw new Error(`Missing a repository.  Use domain.useRepository() first`);
         }
       })
+      // Get the aggregate stream from the repository
       .then(() => this.repository.get(aggregateId, aggregate) )
+      // Lock the aggregate from editing by another user
       .tap(stream => transaction.lock(aggregateId))
+      // Execute the command on the aggregate
       .then(stream => aggregate.execute(command, stream) )
+      // Add the domain meta to each event in the stram (returns stream);
+      .then(newStream => newStream.extendEvents(domainMeta))
+      // add the stream to the transaction
       .then(newStream => transaction.addStream(newStream) )
       .catch(err => {
         transaction.cancel(err);

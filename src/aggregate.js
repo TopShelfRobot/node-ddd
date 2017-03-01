@@ -26,10 +26,16 @@ const Aggregate = {
    */
   execute(cmd, stream) {
 
+    const additionalMeta = {
+      aggregateType: this.aggregateType,
+      command: cmd.meta
+    };
+
     return Promise.all([
       this.project(stream),
       this.getCommandHandler(cmd)
     ])
+      // Execute the command after some sanity checks
       .then(([currentState, handler]) => {
         if (!handler) {
           throw new Error(`Could not find command handler for '${cmd.name}' v${cmd.commandVersion} on aggregate ${this.aggregateType}`);
@@ -38,41 +44,30 @@ const Aggregate = {
           throw new Error(`Aggregate is of wrong type for this command: state(${currentState.aggregateType}) aggregate(${this.aggregateType})`);
         }
 
-        const customCreateEvent = this.createEventForCommand(cmd);
-
-        return handler.execute(cmd, currentState, customCreateEvent);
+        return handler.execute(cmd, currentState, this);
       })
-      .then(events => {
-        // TODO: confirm we received a valid event array
-        if (!Array.isArray(events)) events = [events];
-        return events;
-      })
+      // Confirm that we have a valid array of events
+      .then(events => (Array.isArray(events)) ? events : [events])
+      // Place the command meta in each event meta
+      .then(events => events.map(evt => evt.extendMeta(additionalMeta)) )
+      // Add the events to the stream (returns a stream)
       .then(events => stream.addEvents(events) )
-
   },
 
   // ---------------------------------------------------------------------------
 
 
-  createEventForCommand(cmd) {
-    const cmdMeta = cmd.meta || {};
 
-    const customCreateEvent = (name, eventVersion, payload, meta={}) => {
-      if (typeof eventVersion !== 'number') {
-        meta = payload;
-        payload = eventVersion;
-        eventVersion = null;
-      }
-      meta = Object.assign({}, cmdMeta, meta || {});
-      payload = payload || {};
-
-      return this.createEvent(name, eventVersion, payload, meta);
-    }
-
-    return customCreateEvent;
-  },
 
   createEvent(name, eventVersion, payload, meta={}) {
+    if (typeof eventVersion !== 'number') {
+      meta = payload;
+      payload = eventVersion;
+      eventVersion = null;
+    }
+    meta = meta || {};
+    payload = payload || {};
+
     if (!this.hasEventHandler(name)) {
       throw new ValidationError(`Error creating event`, `Unknown event name '${name}' for aggregate '${this.aggregateType}'`);
     }
@@ -80,13 +75,6 @@ const Aggregate = {
     // If missing a eventVersion, default to the current version
     // of the registered command handler
     eventVersion = eventVersion || this.getEventVersion(name);
-
-    const eventHandler = this.getCommandHandler({name, eventVersion});
-
-    meta = Object.assign({}, meta, {
-      aggregateType: this.aggregateType,
-      domain: (this.domain) ? this.domain.name : null,
-    });
 
     // TODO: Add some event validation here
 

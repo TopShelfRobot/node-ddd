@@ -105,10 +105,10 @@ const EventStore = {
       throw new Error(`Multiple aggregateIds found in the event stream to be saved`);
     }
 
-    events = events.map(evt => this.normalizeEvent(evt));
+    const normalizedEvents = events.map(evt => this.normalizeEvent(evt));
 
-    return Promise.try(() => this.strategy.saveEvents(aggregateId, events))
-      .then(events => events || []);
+    return Promise.try(() => this.strategy.saveEvents(aggregateId, normalizedEvents))
+      .then(() => events);
   },
 
   getLastCommittedVersion: function(...args) {

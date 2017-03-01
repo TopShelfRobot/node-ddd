@@ -29,11 +29,8 @@ TState.initEnum([
 
 const Transaction = {
   addStream(stream) {
-    const transactionData = Object.assign({}, this.meta, {
-      transactionId: this.transactionId,
-    });
 
-    stream = stream.extendEvents({transaction: transactionData})
+
     this.uncommittedStreams.push(stream);
     return this;
   },
@@ -61,9 +58,9 @@ const Transaction = {
    * @return {transaction} This transaction
    */
   commit: function() {
-    this.cancelTimeout();
 
     return Promise.resolve()
+      // Can we actually commit this transaction?
       .then(() => {
 
         if (!this.state.canCommit()) {
@@ -74,16 +71,48 @@ const Transaction = {
           }
         }
 
+        this.cancelTimeout();
+
+        this.endTime = Date.now();
+        this.elapsed = this.endTime - this.startTime;
       })
-      .then(() => this.uncommittedStreams)
-      .map(stream => this.domain.repository.save(stream))
+      // Update meta information for transaction and events
+      .then(() => {
+        // Get the total number of events & streams in this transaction
+        const counts = this.uncommittedStreams.reduce((counts, stream) => {
+          counts.streams +=1;
+          counts.events += stream.getUncomittedEvents().length;
+          return counts;
+        }, {streams:0, events: 0});
+
+        return Object.assign(this.meta, {
+          transactionId: this.transactionId,
+          eventCount   : counts.events,
+          streamCount  : counts.streams,
+          startTime    : this.startTime,
+          endTime      : this.endTime,
+          elapsed      : this.elapsed,
+        });
+      })
+      // Extend each event with transaction metadata (returns array of uncommitted Streams)
+      .then(transaction => this.uncommittedStreams.map(stream => stream.extendEvents({transaction})))
+      // Save each stream via the repository
+      .map(stream => this.saveStream(stream))
+      // Mark all streams as committed
       .tap(committedStreams => {
         this.streams = this.streams.concat(committedStreams);
         this.uncommittedStreams = [];
       })
+      // Release all locks
       .then(() => this.releaseLocks())
       .return(this);
 
+  },
+
+  saveStream(stream) {
+    return (this.domain && this.domain.repository)
+      ? this.domain.repository.save(stream)
+      : stream;
   },
 
 
@@ -169,6 +198,7 @@ export default function CreateTransaction(domain, options={}) {
 
   Object.assign(transaction, defaults, options);
   transaction.domain = domain;
+  transaction.startTime = Date.now();
 
   transaction.refreshTimeout();
 

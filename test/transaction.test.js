@@ -1,17 +1,17 @@
-import {expect} from 'chai';
+import assert from 'assert';
 import CreateTransaction from '../src/transaction';
 
 describe("Transaction", () => {
-  describe("addStream()", () => {
-    it("adds the transaction data to the events in a stream", () => {
-      let extension;
-      const mockStream = {
-        extendEvents: (d) => { extension=d },
-      };
-      const trans = CreateTransaction({}, mockStream);
-      trans.addStream(mockStream);
-      expect(extension).to.have.property('transaction');
-      expect(extension.transaction.transactionId).to.equal(trans.transactionId);
+  describe("committing", () => {
+    it("can commit an empty transaction", done => {
+      const t = CreateTransaction();
+      t.commit().then(t => {
+        assert.ok(t.startTime);
+        assert.ok(t.endTime);
+        assert.ok(t.elapsed+1);
+        done()
+      }).catch(done);
     })
+
   })
 })

@@ -52,35 +52,6 @@ function inferVersion(events) {
 
 
 const Stream = {
-  /**
-   * Projects all unconsumed events on to internal state.
-   *
-   * Idempotent behavior: Consumes all events so that subsequent
-   * calls do not affect state
-   *
-   * @param  {Projector} projector Anything that implements a projector
-   *                               interface (eg. aggregates)
-   * @return {Stream}             Returns this stream
-   */
-  play: function(projector) {
-
-    let startState, startVersion;
-    if (this.onVersion === 0) {
-      startState = this.getSnapshot() || projector.getInitialState()
-      startVersion = 0;
-    } else {
-      startState = this.state;
-      startVersion = this.onVersion;
-    }
-
-    const events = this.getEvents(startVersion);
-    const newState = projector.project(events, startState);
-
-    this.setState(newState);
-    this.consumeAllEvents();
-
-    return this;
-  },
 
   /**
    * Resets the state and onVersion iterator
@@ -93,13 +64,7 @@ const Stream = {
     return this;
   },
 
-  getState: function() {
-    return this.state;
-  },
-
-  setState: function(newState) {
-    this.state = newState;
-  },
+  
 
   getLatestVersion: function() {
     const snapshotVersion = (this.snapshot) ? this.snapshot.version : 0;

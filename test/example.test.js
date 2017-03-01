@@ -59,7 +59,8 @@ describe("Example App", () => {
         expect(evt.meta.aggregateType).to.equal('invoice');
         expect(evt.meta.transaction).to.be.ok;
         expect(evt.meta.transaction.transactionId).to.be.ok;
-        expect(evt.meta.domain).to.equal(domain.name);
+        expect(evt.meta.domain).to.be.ok;
+        expect(evt.meta.domain.name).to.equal(domain.name);
       });
     });
   })

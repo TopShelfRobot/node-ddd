@@ -5,19 +5,19 @@ function lineItemId() {
 }
 
 const invCommands = {
-  createInvoice: function(cmd, state, createEvent) {
+  createInvoice: function(cmd, state, agg) {
     const {payload} = cmd;
     if (!payload.lineItems || !payload.lineItems.length) {
       throw new Error('Cannot create invoice. At least one line item required');
     }
 
     const events = [];
-    const createEvt = createEvent('invoiceCreated', payload);
-    const itemsEvts = payload.lineItems.map(li => createEvent('invoiceItemCreated', li));
+    const createEvt = agg.createEvent('invoiceCreated', payload);
+    const itemsEvts = payload.lineItems.map(li => agg.createEvent('invoiceItemCreated', li));
     return events.concat(createEvt, itemsEvts);
   },
 
-  addLineItem: function(cmd, state, createEvent) {
+  addLineItem: function(cmd, state, agg) {
     if (invoice.status === 'Closed') {
       throw new Error(`Cannot add a line item to a closed invoice`)
     }
@@ -32,7 +32,7 @@ const invCommands = {
     return InvoiceItem.handle(cmd);
   },
 
-  payInvoice: function(cmd, state, createEvent) {
+  payInvoice: function(cmd, state, agg) {
     if (invoice.status === 'Closed' || invoice.remaining <= 0) {
       throw new Error('Cannot make payment on a closed invoice or an invoice with no remaining balance');
     }
@@ -40,9 +40,9 @@ const invCommands = {
     const paymentToApply = Math.min(payment, invoice.remaining);
     const events = [];
 
-    events.push( createEvent('invoicePaymentMade', {payment: paymentToApply}) );
+    events.push( agg.createEvent('invoicePaymentMade', {payment: paymentToApply}) );
     if (invoice.remaining === paymentToApply) {
-      events.push( createEvent('invoiceClosed'))
+      events.push( agg.createEvent('invoiceClosed'))
     }
 
     return events;

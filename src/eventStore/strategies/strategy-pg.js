@@ -28,7 +28,7 @@ const Strategy = {
     const sql = this.pgp.helpers.insert(events, fields,  this.eventTableName);
 
     return this.db.none(sql)
-      .return(events)
+      .then(() => events)
       .catch(err => {
         throw new SQLError(sql, err);
       })
