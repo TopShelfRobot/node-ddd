@@ -183,7 +183,7 @@ const Domain = {
     return CreateCommand(name, commandVersion, payload, meta);
   },
 
-  validateCommand(command) {
+  validateCommandFormat(command) {
     const {name, commandVersion, payload, meta} = command;
     if (!name || !meta || !meta.commandHandler) {
       return [`Invalid command sent to domain ${this.name}`];
@@ -199,11 +199,13 @@ const Domain = {
   },
 
   validateCommandName(name) {
+    const validationErrors = [];
+
     if (!this.hasCommandHandler(name)) {
-      return [`Unknown command sent to domain '${this.name}': '${name}'`];
-    } else {
-      return [];
+      validationErrors.push(`Unknown command sent to domain '${this.name}': '${name}'`);
     }
+
+    return validationErrors
   },
 
   validateCommandPayload(payload, schema) {
@@ -211,7 +213,9 @@ const Domain = {
   },
 
   validateCommandMeta(meta) {
-    return [];
+    return (this.schemas.commandMeta)
+      ? validateAgainstSchema(meta, this.schemas.commandMeta)
+      : [];
   },
 
 
@@ -223,7 +227,7 @@ const Domain = {
       // validate the command
       //
       .then(() => {
-        const validationErrors = this.validateCommand(command);
+        const validationErrors = this.validateCommandFormat(command);
         if (validationErrors.length) {
           throw new ValidationError('Validation Errors executing a command', validationErrors);
         }
@@ -418,6 +422,7 @@ export default function CreateDomain(name, options={}) {
   domain.services = {};
   domain.events = {};
   domain.commands = {};
+  domain.schemas = {};
   domain.name = options.name || path.basename(__dirname);
 
   if (options.events) domain.loadEventHandlers(options.events);

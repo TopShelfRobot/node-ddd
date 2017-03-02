@@ -2,6 +2,7 @@ import Promise from 'bluebird';
 import dotty from 'dotty';
 import createStream from '../stream';
 import _isObject from 'lodash/isObject';
+import _isNil from 'lodash/isNil';
 import _uniq from 'lodash/uniq';
 const debug = require('debug')('eventStore');
 
@@ -20,17 +21,15 @@ const EventStore = {
 
     const {properties, required=[]} =  this.eventSchema;
     const normEvt = Object.keys(properties).reduce((normalized, field) => {
-      const eventPath = properties[field].path;
-
-      if (!eventPath) {
-        throw new ConfigurationError(`Event Schema for '${field}' is missing required 'path' property`, {event: evt});
-      }
+      const eventPath = properties[field].path || field;
 
       let value;
       if (eventPath === '{date}') {
         value = new Date();
       } else {
-        value = dotty.get(evt, eventPath);
+        value = (Array.isArray(eventPath))
+          ? eventPath.map(p => dotty.get(evt, p)).find(val => !_isNil(val))
+          : dotty.get(evt, eventPath);
       }
 
       if (required.indexOf(field) >= 0 && (value === undefined || value === null)) {

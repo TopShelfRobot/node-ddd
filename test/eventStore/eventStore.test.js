@@ -36,6 +36,27 @@ describe("EventStore", () => {
       assert.deepStrictEqual(norm, { aggregateId: 'abc', myProp: 123 });
     });
 
+    it("treats ann array of paths as an OR-ed list", () => {
+      const evt1 = { a: 1, b: 2, }
+      const evt2 = { a: null, b: 2, }
+      const evt3 = { a: 1, b: null, }
+      const evt4 = { a: 1, b: 0, }
+
+      const eventSchema = {
+        type: 'object',
+        properties: {
+          res: {type: 'number', path: ['b','a']}
+        }
+      }
+      const es = EventStore.CreateEventStore(mockStrategy, { eventSchema });
+
+      assert.deepStrictEqual(es.normalizeEvent(evt1), {res: 2});
+      assert.deepStrictEqual(es.normalizeEvent(evt2), {res: 2});
+      assert.deepStrictEqual(es.normalizeEvent(evt3), {res: 1});
+      assert.deepStrictEqual(es.normalizeEvent(evt4), {res: 0});
+
+    })
+
   });
 
 
