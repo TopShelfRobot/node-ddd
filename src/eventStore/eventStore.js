@@ -4,62 +4,13 @@ import createStream from '../stream';
 import _isObject from 'lodash/isObject';
 import _isNil from 'lodash/isNil';
 import _uniq from 'lodash/uniq';
+import Normalizer from '../components/normalizer';
 const debug = require('debug')('eventStore');
 
 import {isValidStrategy} from './strategies';
 
 
 const EventStore = {
-  /**
-   * Preps an event to be persisted in the eventStore
-   * @param  {Event} evt The event to be normalized
-   * @return {Object}     The normalized event object
-   */
-  normalizeEvent(evt) {
-    if (!this.eventSchema || !this.eventSchema.properties) return evt;
-
-
-    const {properties, required=[]} =  this.eventSchema;
-    const normEvt = Object.keys(properties).reduce((normalized, field) => {
-      const eventPath = properties[field].path || field;
-
-      let value;
-      if (eventPath === '{date}') {
-        value = new Date();
-      } else {
-        value = (Array.isArray(eventPath))
-          ? eventPath.map(p => dotty.get(evt, p)).find(val => !_isNil(val))
-          : dotty.get(evt, eventPath);
-      }
-
-      if (required.indexOf(field) >= 0 && (value === undefined || value === null)) {
-        const err = new Error(`Event is missing value for field ${field} at path ${eventPath}`);
-        debug(err);
-        throw(err);
-      }
-
-      dotty.put(normalized, field, value);
-      return normalized;
-    }, {});
-    return normEvt;
-  },
-
-  /**
-   * Converts an eventStore record to an event
-   * @param  {Object} record Item returned from the eventStore
-   * @return {Event}        Rehydrated event
-   */
-  denormalizeEvent(record) {
-    if (!this.eventSchema) return record;
-
-    return Object.keys(this.eventSchema).reduce((evt, field) => {
-      const eventPath = this.eventSchema[field];
-      const value = dotty.get(record, field);
-      dotty.put(evt, eventPath, value);
-      return evt;
-    }, {});
-  },
-
   /**
    * Initializes the eventStore
    * Simple wrapper around implementation-specific init() to ensure
@@ -104,7 +55,7 @@ const EventStore = {
       throw new Error(`Multiple aggregateIds found in the event stream to be saved`);
     }
 
-    const normalizedEvents = events.map(evt => this.normalizeEvent(evt));
+    const normalizedEvents = events.map(evt => this.normalize('event', evt));
 
     return Promise.try(() => this.strategy.saveEvents(aggregateId, normalizedEvents))
       .then(() => events);
@@ -132,7 +83,7 @@ const EventStore = {
 
 }
 
-const EventStorePrototype = Object.assign({}, EventStore);
+const EventStorePrototype = Object.assign({}, Normalizer, EventStore);
 
 /**
  * Create an EventStore
@@ -143,9 +94,10 @@ export default function CreateEventStore(strategy, options={}) {
 
   const eventStore = Object.create(EventStorePrototype);
 
-  eventStore.strategy        = strategy;
-  eventStore.eventSchema     = options.eventSchema;
-  eventStore._normalizeEvent = options.normalizeEvent;
+  eventStore.strategy = strategy;
+  if (options.eventSchema) {
+    eventStore.addSchema('event', options.eventSchema);
+  }
 
   return eventStore;
 }

@@ -31,7 +31,7 @@ describe("EventStore", () => {
         required: ['aggregateId', 'myProp']
       }
       const eventStore = EventStore.CreateEventStore(mockStrategy, { eventSchema });
-      const norm = eventStore.normalizeEvent(evt);
+      const norm = eventStore.normalize('event', evt);
 
       assert.deepStrictEqual(norm, { aggregateId: 'abc', myProp: 123 });
     });
@@ -50,10 +50,10 @@ describe("EventStore", () => {
       }
       const es = EventStore.CreateEventStore(mockStrategy, { eventSchema });
 
-      assert.deepStrictEqual(es.normalizeEvent(evt1), {res: 2});
-      assert.deepStrictEqual(es.normalizeEvent(evt2), {res: 2});
-      assert.deepStrictEqual(es.normalizeEvent(evt3), {res: 1});
-      assert.deepStrictEqual(es.normalizeEvent(evt4), {res: 0});
+      assert.deepStrictEqual(es.normalize('event', evt1), {res: 2});
+      assert.deepStrictEqual(es.normalize('event', evt2), {res: 2});
+      assert.deepStrictEqual(es.normalize('event', evt3), {res: 1});
+      assert.deepStrictEqual(es.normalize('event', evt4), {res: 0});
 
     })
 
