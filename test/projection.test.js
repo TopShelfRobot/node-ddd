@@ -3,7 +3,7 @@ import {CreateProjection} from '../src';
 
 const getState = () => {};
 
-describe.only("Projection", () => {
+describe("Projection", () => {
   describe("creating a projection", () => {
     const events = [
       {name: 'event-tested', eventVersion: 1, callback: () => {}, onComplete: () => {}}
@@ -33,7 +33,7 @@ describe.only("Projection", () => {
   });
 
 
-  describe("getProjection()", () => {
+  describe("get, put and project", () => {
     let store = null;
     const getProjection = () => {return store};
     const putProjection = state => { store = state; };
@@ -49,40 +49,139 @@ describe.only("Projection", () => {
       }
     }
 
-    it("returns the current state unaltered when there is no normalizing schema", done => {
-      const projection = CreateProjection('tester', {getProjection, putProjection, initialState, events});
-      store = {norm_count:123, norm_list: [1,2,3]};
+    describe("getProjection()", () => {
 
-      projection.getProjection({})
+      it("returns the current state unaltered when there is no normalizing schema", done => {
+        const projection = CreateProjection('tester', {getProjection, putProjection, initialState, events});
+        store = {norm_count:123, norm_list: [1,2,3]};
+
+        projection.getProjection({})
         .then(state => {
           assert.deepEqual(state, store);
           done();
         }).catch(done);
-    })
+      })
 
-    it("returns the current state denormalized when there is a normalizing schema", done => {
-      const projection = CreateProjection('tester', {getProjection, putProjection, initialState, normalSchema, events});
-      store = {norm_count:123, norm_list: [1,2,3]};
-      const expected = {count: store.norm_count, list: store.norm_list};
+      it("returns the current state denormalized when there is a normalizing schema", done => {
+        const projection = CreateProjection('tester', {getProjection, putProjection, initialState, normalSchema, events});
+        store = {norm_count:123, norm_list: [1,2,3]};
+        const expected = {count: store.norm_count, list: store.norm_list};
 
-      projection.getProjection({})
+        projection.getProjection({})
         .then(state => {
           assert.deepEqual(state, expected);
           done();
         }).catch(done);
-    })
+      })
 
-    it("returns passed initial state if state is null", done => {
-      const projection = CreateProjection('tester', {getProjection, putProjection, initialState, events, normalSchema});
-      store = null;
+      it("returns passed initial state if stored state is null", done => {
+        const projection = CreateProjection('tester', {getProjection, putProjection, initialState, events, normalSchema});
+        store = null;
 
-      assert.deepEqual(projection.initialState, initialState);
+        assert.deepEqual(projection.initialState, initialState);
 
-      projection.getProjection({})
+        projection.getProjection({})
         .then(state => {
           assert.deepEqual(state, initialState);
           done();
         }).catch(done);
+      })
+
+    })
+
+    describe("putProjection()", () => {
+      it("puts the state unaltered when there is no normalizing schema", done => {
+        const projection = CreateProjection('tester', {getProjection, putProjection, initialState, events});
+        const state = {count: 123, list: [1,2,3]};
+        store = null;
+
+        projection.putProjection(state)
+          .then(() => {
+            assert.deepEqual(store, state);
+            done();
+          }).catch(done);
+      });
+
+      it("puts the normalized state  when there is a normalizing schema", done => {
+        const projection = CreateProjection('tester', {getProjection, putProjection, initialState, events, normalSchema});
+        const state = {count: 123, list: [1,2,3]};
+        const expected = {norm_count: state.count, norm_list: state.list};
+        store = null;
+
+        projection.putProjection(state)
+          .then(() => {
+            assert.deepEqual(store, expected);
+            done();
+          }).catch(done);
+      });
+
+    })
+
+    describe("projectEvents()", () => {
+      it("projects a single event without normalization", done => {
+        const projection = CreateProjection('tester', {getProjection, putProjection, initialState, events});
+        const evt = {name: 'increment', eventVersion: 1, payload: {}, meta: {}};
+        const expected = {count: 1, list: []};
+        store = null;
+
+
+        projection.projectEvent(evt)
+          .then(() => {
+            assert.deepEqual(store, expected);
+            done();
+          }).catch(done);
+      })
+
+      it("projects multiple events without normalization", done => {
+        const projection = CreateProjection('tester', {getProjection, putProjection, initialState, events});
+        const evt = [
+          {name: 'increment', eventVersion: 1, payload: {}, meta: {}},
+          {name: 'increment', eventVersion: 1, payload: {}, meta: {}},
+          {name: 'increment', eventVersion: 1, payload: {}, meta: {}},
+        ]
+        const expected = {count: 4, list: []};
+        store = {count: 1, list:[]};
+
+
+        projection.projectEvent(evt)
+          .then(() => {
+            assert.deepEqual(store, expected);
+            done();
+          }).catch(done);
+      })
+
+      it("projects a single event WITH normalization", done => {
+        const projection = CreateProjection('tester', {getProjection, putProjection, initialState, normalSchema, events});
+        const evt = {name: 'increment', eventVersion: 1, payload: {}, meta: {}};
+        const expected = {norm_count: 1, norm_list: []};
+        store = null;
+
+
+        projection.projectEvent(evt)
+          .then(() => {
+            assert.deepEqual(store, expected);
+            done();
+          }).catch(done);
+      })
+
+      it("projects multiple events WITH normalization", done => {
+        const projection = CreateProjection('tester', {getProjection, putProjection, initialState, normalSchema, events});
+        const evt = [
+          {name: 'increment', eventVersion: 1, payload: {}, meta: {}},
+          {name: 'increment', eventVersion: 1, payload: {}, meta: {}},
+          {name: 'increment', eventVersion: 1, payload: {}, meta: {}},
+        ];
+        const expected = {norm_count: 4, norm_list: []};
+        store = {norm_count: 1, norm_list:[]};
+
+
+        projection.projectEvent(evt)
+          .then(() => {
+            assert.deepEqual(store, expected);
+            done();
+          }).catch(done);
+      })
+
     })
 
   })

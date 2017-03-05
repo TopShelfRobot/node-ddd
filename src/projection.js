@@ -5,35 +5,19 @@ import Normalizer from './components/normalizer';
 
 const Projection = {
 
+  projectEvent(event) { return this.projectEvents(event); },
+  projectEvents(events) {
+    events = (Array.isArray(events)) ? events : [events];
 
+    if (!events.length) return Promise.resolve()
 
-  /**
-   * handleEvent
-   *
-   * Handles a single event off an event queue
-   *
-   * @param  {Event} evt The event to handle
-   * @return {Object}     Resolves to the new state
-   */
-  somefunc(evt) {
-    const eventHandler = this.projector.getEventHandler(evt);
-    if (!eventHandler) { return Promise.resolve(); }
+    // TODO: Allow for a stream/array of events that apply to different
+    // projections
+    const evt = events[0];
 
-    return this.getState(evt)
-      .then(currentState => eventHandler.execute(evt.payload, currentState) || currentState)
-      .tap(newState => eventHandler.onComplete(newState, evt))
-      .tap(newState => this.onComplete(newState, evt));
-  },
-
-
-  projectEvent(evt) {
-    const eventHandler = this.projector.getEventHandler(evt);
-    if (!eventHandler) { return Promise.resolve(); }
-
-    return this.getProjection(evt)
-      .then(projectionState => this.denormalize(this.normalSchema, projectionState))
-      .then(currentState => eventHandler.execute(evt.payload, currentState) || currentState)
-      .then(newState => this.normalize(this.normalSchema, newState))
+    return Promise.resolve()
+      .then(() => this.getProjection(evt))
+      .then(currentState => this.projector.projectEvents(events, currentState))
       .then(newState => this.putProjection(newState))
       // TODO: Catch errors
   },
@@ -44,13 +28,12 @@ const Projection = {
       .then(state => state || this.initialState);
   },
 
-
-  getState(evt) {
-    return Promise.resolve(this._getState(evt))
-      .then(state => state || this.initialState);
+  putProjection(state) {
+    return Promise.try(() => this.normalize(this.normalSchema, state))
+      .then(record => this._putProjection(record));
   },
 
-  onComplete(state, evt) { },
+
   getEvents() {
     return this.eventList;
   }

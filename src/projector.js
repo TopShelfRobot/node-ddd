@@ -9,6 +9,10 @@ const Projector = {
     const initialState = stream.getCurrentState();
     const events = stream.getEvents();
 
+    return this.projectEvents(events, initialState);
+  },
+
+  projectEvents(events, initialState) {
     return events.reduce(this.projectEvent.bind(this), initialState);
   },
 

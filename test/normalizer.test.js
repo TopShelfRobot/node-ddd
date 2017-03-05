@@ -1,7 +1,7 @@
 import assert from 'assert';
 import Normalizer from '../src/components/normalizer';
 
-describe.only("Normalizer", () => {
+describe("Normalizer", () => {
   describe("adds a schema", () => {
     it("creates a schema registry", () => {
       const norm = Object.create(Normalizer);

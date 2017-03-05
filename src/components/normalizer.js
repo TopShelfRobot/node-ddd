@@ -21,7 +21,7 @@ const Normalizer = {
 
   normalize(schemaName, o) {
     const schema = this.getSchema(schemaName);
-    if (!schema || !schema.properties) return o;
+    if (!o || !schema || !schema.properties) return o;
 
     const {properties, required=[]} = schema;
     const norm = Object.keys(properties).reduce((normalized, field) => {
