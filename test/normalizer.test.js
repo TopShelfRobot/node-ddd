@@ -1,7 +1,7 @@
 import assert from 'assert';
 import Normalizer from '../src/components/normalizer';
 
-describe("Normalizer", () => {
+describe.only("Normalizer", () => {
   describe("adds a schema", () => {
     it("creates a schema registry", () => {
       const norm = Object.create(Normalizer);
@@ -91,6 +91,19 @@ describe("Normalizer", () => {
 
       const denormalized = norm.denormalize(schema, record);
       assert.deepEqual(denormalized, expected);
+    })
+
+    it("gracefully returns null when record is null", () => {
+      const record = null;
+      const schema = {
+        type: 'object',
+        properties: {
+          'prop_1': {type: 'string', path: 'prop1'},
+          'prop_2': {type: 'number', path: 'deeply.nested.prop'},
+        }
+      };
+      const norm = Object.create(Normalizer);
+      assert.strictEqual(norm.denormalize(schema, record), null);
     })
   })
 });

@@ -49,7 +49,7 @@ const Normalizer = {
 
   denormalize(schemaName, record) {
     const schema = this.getSchema(schemaName);
-    if (!schema || !schema.properties) return record;
+    if (!record || !schema || !schema.properties) return record;
 
     const {properties, required=[]} = schema;
     const denorm = Object.keys(properties).reduce((denormalized, field) => {
