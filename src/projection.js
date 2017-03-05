@@ -40,6 +40,7 @@ const Projection = {
 
   getProjection(selector) {
     return Promise.try(() => this._getProjection(selector))
+      .then(state => this.denormalize(this.normalSchema, state))
       .then(state => state || this.initialState);
   },
 

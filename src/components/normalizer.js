@@ -10,6 +10,7 @@ const Normalizer = {
   },
 
   getSchema(schema) {
+    if (!schema) return null;
     if (_isObject(schema)) return schema;
     if (!_isString(schema)) {
       throw new Error(`Cannot get schema.  Please pass a string`);

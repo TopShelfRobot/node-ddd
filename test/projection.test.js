@@ -63,7 +63,7 @@ describe.only("Projection", () => {
     it("returns the current state denormalized when there is a normalizing schema", done => {
       const projection = CreateProjection('tester', {getProjection, putProjection, initialState, normalSchema, events});
       store = {norm_count:123, norm_list: [1,2,3]};
-      expected = {norm: store.norm_count, list: store.norm_list};
+      const expected = {count: store.norm_count, list: store.norm_list};
 
       projection.getProjection({})
         .then(state => {

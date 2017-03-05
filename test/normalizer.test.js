@@ -93,6 +93,17 @@ describe.only("Normalizer", () => {
       assert.deepEqual(denormalized, expected);
     })
 
+    it("gracefully returns record when schema is nil", () => {
+      const record = {
+        prop_1: 'val1',
+        prop_2: 123,
+      };
+      const norm = Object.create(Normalizer);
+
+      assert.deepEqual(norm.denormalize(null, record), record);
+      assert.deepEqual(norm.denormalize(undefined, record), record);
+    });
+
     it("gracefully returns null when record is null", () => {
       const record = null;
       const schema = {
