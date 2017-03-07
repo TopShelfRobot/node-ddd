@@ -173,6 +173,17 @@ const Transaction = {
   },
 
 
+  summary() {
+    return {
+      transactionId: this.transactionId,
+      status: this.state.name,
+      streams: this.streams,
+      meta: this.meta,
+      failReason: this.failReason,
+    }
+  },
+
+
 
 }
 

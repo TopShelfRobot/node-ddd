@@ -12,6 +12,20 @@ describe("Transaction", () => {
         done()
       }).catch(done);
     })
+  })
 
+  describe("summary()", () => {
+    it("presents a summary of the transaction", () => {
+      const t = CreateTransaction();
+      const transactionId = t.transactionId;
+      const expected = {
+        transactionId: transactionId,
+        status: 'active',
+        streams: [],
+        meta: {},
+        failReason: null,
+      }
+      assert.deepEqual(t.summary(), expected);
+    })
   })
 })
