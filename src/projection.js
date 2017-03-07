@@ -11,26 +11,57 @@ const Projection = {
 
     if (!events.length) return Promise.resolve()
 
-    // TODO: Allow for a stream/array of events that apply to different
-    // projections
-    const evt = events[0];
+    // Note: This is highly inefficient when the array of events
+    // all affect the same projection because each event will trigger
+    // a fetch and a write (or multiple writes).
+    // Refactor to make use of a cache so that there is only one write
+    // stage per function call
+    return Promise.each(events, evt => {
 
-    return Promise.resolve()
-      .then(() => this.getProjection(evt))
-      .then(currentState => this.projector.projectEvents(events, currentState))
-      .then(newState => this.putProjection(newState))
-      // TODO: Catch errors
+      return Promise.all([
+        this.getProjection(evt),
+        this.projector.getEventHandler(evt)
+      ])
+        .then(([currentState, eventHandler]) => {
+          if (!eventHandler) {
+            // Do something
+          }
+          return eventHandler.execute(evt.payload, currentState) || state
+        })
+        .then(newState => this.putProjection(newState))
+        // TODO: Catch errors and handle, otherwise the entire loop stops
+
+    })
   },
 
-  getProjection(selector) {
-    return Promise.try(() => this._getProjection(selector))
+
+  getProjection(evt) {
+    const getProjection = (this.customGetProjection[evt.name])
+      ? this.customGetProjection[evt.name]
+      : this.defaultGetProjection;
+
+    return Promise.try(() => getProjection(evt))
       .then(state => this.denormalize(this.normalSchema, state))
       .then(state => state || this.initialState);
   },
 
-  putProjection(state) {
-    return Promise.try(() => this.normalize(this.normalSchema, state))
-      .then(record => this._putProjection(record));
+  putProjection(states) {
+    states = (Array.isArray(states)) ? states : [states];
+    const putProjection = this.defaultPutProjection;
+
+    return Promise
+      .map(states, state => this.normalize(this.normalSchema, state))
+      .map(record => putProjection(record))
+  },
+
+  useCustomGetProjection(eventName, getProjection) {
+    if (typeof getProjection !== 'function') return;
+    this.customGetProjection[eventName] = getProjection.bind(this);
+  },
+
+  useCustomPutProjection(eventName, putProjection) {
+    if (typeof putProjection !== 'function') return;
+    this.customPutProjection[eventName] = putProjection.bind(this);
   },
 
 
@@ -61,24 +92,23 @@ export default function CreateProjection(name, options) {
   // TODO: move 'required methods' in to the projector or event registry
   const projector = CreateProjector();
 
-  // Ensure that each event handler has an onComplete method
-  // const missingOnComplete = options.events
-  //   .filter(evt => typeof evt.onComplete !== 'function')
-  //   .map(config => projector.eventRegistry.extractName(config));
-  // if (missingOnComplete.length) {
-  //   throw new ConfigurationError(`These event handlers are missing an onComplete method: [${missingOnComplete.join(',')}]`)
-  // }
-
-
   const projection = Object.create(ProjectionPrototype);
-  projection.name           = name;
-  projection._getProjection = options.getProjection;
-  projection._putProjection = options.putProjection;
-  projection.normalSchema   = options.normalSchema;
-  projection.initialState   = options.initialState || {};
-  projection.options        = options;
-  projection.projector      = projector;
+  projection.name                 = name;
+  projection.defaultGetProjection = options.getProjection.bind(projection);
+  projection.defaultPutProjection = options.putProjection.bind(projection);
+  projection.customGetProjection  = {};
+  projection.customPutProjection  = {};
+  projection.normalSchema         = options.normalSchema;
+  projection.initialState         = options.initialState || {};
+  projection.options              = options;
+  projection.projector            = projector;
   projection.projector.loadEventHandlers(options.events);
+
+  // Register custom get- and putProjection functions
+  (options.events || []).forEach(evt => {
+    if (evt.getProjection) projection.useCustomGetProjection(evt.name, evt.getProjection);
+    if (evt.putProjection) projection.useCustomPutProjection(evt.name, evt.putProjection);
+  });
 
   projection.eventList = projection.projector.getEventHandlers().map(handler => handler.getName());
 

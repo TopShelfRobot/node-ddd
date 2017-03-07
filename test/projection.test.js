@@ -87,6 +87,30 @@ describe("Projection", () => {
         }).catch(done);
       })
 
+      it("uses an event custom getProjection if present", done => {
+        const getProjection = () => 123;
+        const customGetProjection = () => 456;
+        const projection = CreateProjection('tester', {
+          getProjection,
+          putProjection,
+          events: [
+            {name: 'use-default', eventVersion: 1, callback: (payload, state) => Object.assign({}, state, {count: state.count +1})},
+            {name: 'use-custom', eventVersion: 1, getProjection: customGetProjection, callback: (payload, state) => Object.assign({}, state, {count: state.count +1})},
+          ],
+        });
+
+        Promise.all([
+          projection.getProjection({name: 'use-default'}),
+          projection.getProjection({name: 'use-custom'}),
+        ])
+          .then(([def, cust]) => {
+            assert.equal(def, getProjection());
+            assert.equal(cust, customGetProjection());
+            done();
+          })
+          .catch(done);
+      });
+
     })
 
     describe("putProjection()", () => {
