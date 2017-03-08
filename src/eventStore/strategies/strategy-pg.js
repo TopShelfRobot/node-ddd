@@ -13,15 +13,15 @@ const Strategy = {
 
   },
 
-  saveEvents: function(aggregateId, events) {
+  saveEvents: function(events) {
     if (!events.length) return;
 
     // TODO: This should be in the repository
-    const firstVersionToSave = events[0].version;
-    const lastVersion = this.getLastCommittedVersion(aggregateId, {limit: 1, order: 'desc'});
-    if (lastVersion >= firstVersionToSave) {
-      throw new Error(`Concurrency error for aggregate ${aggregateId}.  Attempting to save stream starting at version ${firstVersionToSave} when stream already at ${lastVersion}`);
-    }
+    // const firstVersionToSave = events[0].version;
+    // const lastVersion = this.getLastCommittedVersion(aggregateId, {limit: 1, order: 'desc'});
+    // if (lastVersion >= firstVersionToSave) {
+    //   throw new Error(`Concurrency error for aggregate ${aggregateId}.  Attempting to save stream starting at version ${firstVersionToSave} when stream already at ${lastVersion}`);
+    // }
 
     // Get the fields to save;
     const fields = Object.keys(events[0]);

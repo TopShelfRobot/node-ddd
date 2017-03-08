@@ -121,7 +121,7 @@ describe('In-Memory eventStore strategy', () => {
         {aggregateId: aggregateId, created: new Date(2017, 1, 2), version: 2},
       ]
       assert(strat.getEvents(aggregateId).length === 0)
-      strat.saveEvents(aggregateId, events);
+      strat.saveEvents(events);
       assert(strat.getEvents(aggregateId).length === 2)
     })
 

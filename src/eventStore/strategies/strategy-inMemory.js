@@ -20,17 +20,17 @@ const Strategy = {
   init: function(options) {
 
   },
-  saveEvents: function(aggregateId, events) {
-    
+  saveEvents: function(normEvents) {
 
-    const firstVersionToSave = events[0].version;
-    const lastVersion = this.getLastCommittedVersion(aggregateId, {limit: 1, order: 'desc'});
-    if (lastVersion >= firstVersionToSave) {
-      throw new Error(`Concurrency error for aggregate ${aggregateId}.  Attempting to save stream starting at version ${firstVersionToSave} when stream already at ${lastVersion}`);
-    }
 
-    events.forEach(evt => this._events.push(evt) );
-    return events;
+    const firstVersionToSave = normEvents[0].version;
+    // const lastVersion = this.getLastCommittedVersion(aggregateId, {limit: 1, order: 'desc'});
+    // if (lastVersion >= firstVersionToSave) {
+    //   throw new Error(`Concurrency error for aggregate ${aggregateId}.  Attempting to save stream starting at version ${firstVersionToSave} when stream already at ${lastVersion}`);
+    // }
+
+    normEvents.forEach(evt => this._events.push(evt) );
+    return normEvents;
   },
 
   saveSnapshot: function(aggregateId, snapshot) {

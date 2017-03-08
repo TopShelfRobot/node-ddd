@@ -52,23 +52,13 @@ const EventStore = {
   },
 
 
-  saveEvents: function(aggregateId, events) {
-    if (!aggregateId) {
-      throw new Error(`Cannot save events: Missing aggregateId`);
-    }
+  saveEvents: function(events) {
     if (!events.length) return Promise.resolve();
     if (!Array.isArray(events)) events = [events];
 
-    // Check that all events are for the same aggregateId
-    // Get the aggregateId
-    const wrongAggId = events.filter(evt => evt.meta.aggregateId !== aggregateId);
-    if (wrongAggId.length) {
-      throw new Error(`Multiple aggregateIds found in the event stream to be saved`);
-    }
-
     const normalizedEvents = events.map(evt => this.normalize('event', evt));
 
-    return Promise.try(() => this.strategy.saveEvents(aggregateId, normalizedEvents))
+    return Promise.try(() => this.strategy.saveEvents(normalizedEvents))
       .then(() => events);
   },
 

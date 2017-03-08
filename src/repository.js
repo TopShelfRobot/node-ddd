@@ -55,7 +55,7 @@ const Repository = {
     const events = stream.getUncomittedEvents();
     const aggregateId = stream.getAggregateId();
 
-    return this.eventStore.saveEvents(aggregateId, events)
+    return this.eventStore.saveEvents(events)
       .map(evt => this.domain.publish(evt))
       .then(() => stream.commitAllEvents())
       .catch(err => {
