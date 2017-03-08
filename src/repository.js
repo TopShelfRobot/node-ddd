@@ -50,14 +50,18 @@ const Repository = {
    * @param  {stream} stream The event stream to save
    * @return {stream}        Fully committed stream
    */
-  save: function(stream) {
+  save: function(streams) {
     // TODO: Catch concurrency errors and handle them
-    const events = stream.getUncomittedEvents();
-    const aggregateId = stream.getAggregateId();
+    streams = (Array.isArray(streams)) ? streams : [streams];
+
+    const events = streams.reduce(
+      (events, stream) => events.concat(stream.getUncomittedEvents()),
+      []
+    );
 
     return this.eventStore.saveEvents(events)
       .map(evt => this.domain.publish(evt))
-      .then(() => stream.commitAllEvents())
+      .then(() => streams.forEach(stream => stream.commitAllEvents()) )
       .catch(err => {
         throw new Error(err.message);
       });

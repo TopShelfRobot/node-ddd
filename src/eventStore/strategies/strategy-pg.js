@@ -30,6 +30,7 @@ const Strategy = {
     return this.db.none(sql)
       .then(() => events)
       .catch(err => {
+        // TODO: Check if this is a concurrency error
         throw new SQLError(sql, err);
       })
 
