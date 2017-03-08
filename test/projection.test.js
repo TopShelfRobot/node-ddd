@@ -139,6 +139,7 @@ describe("Projection", () => {
           }).catch(done);
       });
 
+
     })
 
     describe("projectEvents()", () => {

@@ -9,6 +9,17 @@ const debug = require('debug')('eventStore');
 
 import {isValidStrategy} from './strategies';
 
+function decorateErrorMessage(fn, msg) {
+  return function(...args) {
+    try {
+      return fn.apply(this, args);
+    } catch(err) {
+      err.message = `${msg}: ${err.message}`;
+      throw err;
+    }
+  }
+}
+
 
 const EventStore = {
   /**
@@ -37,7 +48,7 @@ const EventStore = {
   getEvents(aggregateId, postVersion=0) {
     return Promise.resolve()
       .then(() => this.strategy.getEvents(aggregateId, postVersion))
-      .then(records => records.map(rec => this.denormalizeEvent(rec)) );
+      .then(records => records.map(rec => this.denormalize(rec)) );
   },
 
 
@@ -95,6 +106,8 @@ export default function CreateEventStore(strategy, options={}) {
   const eventStore = Object.create(EventStorePrototype);
 
   eventStore.strategy = strategy;
+  eventStore.normalize = decorateErrorMessage(eventStore.normalize, "Normalizing event for event store");
+  eventStore.denormalize = decorateErrorMessage(eventStore.denormalize, "Denormalizing event for event store");
   if (options.eventSchema) {
     eventStore.addSchema('event', options.eventSchema);
   }
