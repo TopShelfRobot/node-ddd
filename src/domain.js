@@ -235,7 +235,7 @@ const Domain = {
       //
       // Create the transaction
       //
-      .then(() => (meta.transaction) ? meta.transaction : this.CreateTransaction(meta) )
+      .then(() => (meta.transaction) ? meta.transaction : this.createTransaction(meta) )
       //
       // Execute the command
       //
@@ -327,7 +327,7 @@ const Domain = {
       })
   },
 
-  CreateTransaction: function(meta) {
+  createTransaction: function(meta) {
     return CreateTransaction(this, {meta});
   },
   // ---------------------------------------------------------------------------
