@@ -219,8 +219,8 @@ const Domain = {
   },
 
 
-  execute: function(command, meta) {
-    meta = meta || {};
+  execute: function(command, options) {
+    options = options || {};
 
     return Promise.resolve()
       //
@@ -235,7 +235,7 @@ const Domain = {
       //
       // Create the transaction
       //
-      .then(() => (meta.transaction) ? meta.transaction : this.createTransaction(meta) )
+      .then(() => (options.transaction) ? options.transaction : this.createTransaction(options) )
       //
       // Execute the command
       //
@@ -327,8 +327,8 @@ const Domain = {
       })
   },
 
-  createTransaction: function(meta) {
-    return CreateTransaction(this, {meta});
+  createTransaction: function(options) {
+    return CreateTransaction(this, {options});
   },
   // ---------------------------------------------------------------------------
 
