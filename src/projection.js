@@ -17,15 +17,13 @@ const Projection = {
     // Refactor to make use of a cache so that there is only one write
     // stage per function call
     return Promise.each(events, evt => {
+      const eventHandler = this.projector.getEventHandler(evt);
+      if (!eventHandler) {
+        return Promise.resolve();
+      }
 
-      return Promise.all([
-        this.getProjection(evt),
-        this.projector.getEventHandler(evt)
-      ])
-        .then(([currentState, eventHandler]) => {
-          if (!eventHandler) {
-            // Do something
-          }
+      return Promise.try(() => this.getProjection(evt) )
+        .then(currentState => {
           return eventHandler.execute(evt.payload, currentState) || state
         })
         .then(newState => this.putProjection(newState))

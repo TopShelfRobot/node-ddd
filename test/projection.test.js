@@ -157,6 +157,19 @@ describe("Projection", () => {
           }).catch(done);
       })
 
+      it("gracefully exits when unrecognized event is passed", done => {
+        const projection = CreateProjection('tester', {getProjection, putProjection, initialState, events});
+        const evt = {name: 'idontexist', eventVersion: 1, payload: {}, meta: {}};
+        const expected = {count: 1, list: []};
+        store = null;
+
+
+        projection.projectEvent(evt)
+          .then(() => done())
+          .catch(done);
+
+      })
+
       it("projects multiple events without normalization", done => {
         const projection = CreateProjection('tester', {getProjection, putProjection, initialState, events});
         const evt = [
