@@ -65,11 +65,18 @@ const Aggregate = {
 
 
   createEvent(name, eventVersion, props) {
-    props = Object.assign({}, props, {
+    if (typeof eventVersion !== 'number') {
+      props = eventVersion;
+      eventVersion = null;
+    }
+
+    props = Object.assign({}, (props || {}), {
+      payload: props.payload || {},
+      meta: props.meta || {},
       created: moment().toISOString(),
       version: -1,
       aggregateType: this.aggregateType,
-    })
+    });
 
     return this.eventRegistry.createMessage(name, eventVersion, props);
   },

@@ -37,7 +37,7 @@ const Normalizer = {
       }
 
       if (required.indexOf(field) >= 0 && (value === undefined || value === null)) {
-        const err = new Error(`Missing value for field ${field} at path ${normPath}`);
+        const err = new Error(`Missing value for field '${field}' at path '${normPath}'`);
         throw(err);
       }
 
