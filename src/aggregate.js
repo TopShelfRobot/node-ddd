@@ -1,3 +1,4 @@
+import moment from 'moment';
 import Promise from 'bluebird';
 import uuid from 'node-uuid';
 import _isObject from 'lodash/isObject';
@@ -8,6 +9,13 @@ import CreateEvent from './event';
 import DomainUser from './components/domainUser';
 import {isValidDomain} from './domain';
 import {ValidationError} from './errors';
+
+
+function extendEventMeta(evt, meta) {
+  meta = meta || {};
+  evt.meta = Object.assign((evt.meta || {}), meta);
+  return evt;
+}
 
 const Aggregate = {
   getNewId: function() {
@@ -49,51 +57,31 @@ const Aggregate = {
       // Confirm that we have a valid array of events
       .then(events => (Array.isArray(events)) ? events : [events])
       // Place the command meta in each event meta
-      .then(events => events.map(evt => evt.extendMeta(additionalMeta)) )
+      .then(events => events.map(evt => extendEventMeta(evt, additionalMeta)) )
       // Add the events to the stream (returns a stream)
       .then(events => stream.addEvents(events) )
   },
 
-  // ---------------------------------------------------------------------------
 
 
+  createEvent(name, eventVersion, props) {
+    props = Object.assign({}, props, {
+      created: moment().toISOString(),
+      version: -1,
+      aggregateType: this.aggregateType,
+    })
 
-
-  createEvent(name, eventVersion, payload, meta={}) {
-    if (typeof eventVersion !== 'number') {
-      meta = payload;
-      payload = eventVersion;
-      eventVersion = null;
-    }
-    meta = meta || {};
-    payload = payload || {};
-
-    if (!this.hasEventHandler(name)) {
-      throw new ValidationError(`Error creating event`, `Unknown event name '${name}' for aggregate '${this.aggregateType}'`);
-    }
-
-    // If missing a eventVersion, default to the current version
-    // of the registered command handler
-    eventVersion = eventVersion || this.getEventVersion(name);
-
-    // TODO: Add some event validation here
-    return CreateEvent(name, eventVersion, payload, meta);
+    return this.eventRegistry.createMessage(name, eventVersion, props);
   },
-
-
-
-
-
-
 
 }
 
 
 /**
-* Aggregate Factory
-* @param {[type]} aggregateId [description]
-* @param {[type]} stream      [description]
-*/
+ * Aggregate Factory
+ * @param {[type]} aggregateId [description]
+ * @param {[type]} stream      [description]
+ */
 export default function CreateAggregate(aggregateType, options={}) {
   const Projector = CreateProjector();
   const CommandRegistry = CreateRegistry({messageType: 'command', versionProperty: 'commandVersion'});

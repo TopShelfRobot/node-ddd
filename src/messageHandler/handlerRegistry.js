@@ -200,7 +200,7 @@ const Registry = {
 
     const handler = this.getHandler(message);
     const validationErrors = this.validateMessage(message, handler.schema);
-    
+
     if (validationErrors.length) {
       throw new ValidationError(`Malformed ${this.text.messageType}`, validationErrors);
     }

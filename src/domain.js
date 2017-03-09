@@ -75,6 +75,7 @@ const Domain = {
     }
 
     aggregate.useDomain(this);
+    if (this.eventSchema) aggregate.extendEventSchema(this.eventSchema);
 
     const aggregateCommands = aggregate.getCommandHandlers().map(command => {
       command.aggregateType = aggregateType;
@@ -111,39 +112,6 @@ const Domain = {
     }
   },
 
-  // ===========================================================================
-  // ==== VALIDATION
-  // ===========================================================================
-  validateEventFormat(evt) {
-    const eventSchema = this.getSchema('event');
-    return (eventSchema)
-      ? validateAgainstSchema(evt, eventSchema)
-      : [];
-  },
-
-  isValidEventSchema(eventSchema) {
-    return eventSchema
-      && eventSchema.type === 'object'
-      && eventSchema.properties
-      && eventSchema.properties.name
-      && eventSchema.properties.name.type === 'string'
-      && eventSchema.properties.payload
-      && eventSchema.properties.payload.type === 'object'
-  },
-
-  isValidCommandSchema(commandSchema) {
-    return commandSchema
-      && commandSchema.type === 'object'
-      && commandSchema.properties
-      && commandSchema.properties.name
-      && commandSchema.properties.name.type === 'string'
-      && commandSchema.properties.aggregateId
-      && commandSchema.properties.aggregateId.type === 'string'
-      && commandSchema.properties.payload
-      && commandSchema.properties.payload.type === 'object'
-      && commandSchema.properties.meta
-      && commandSchema.properties.meta.type === 'object'
-  },
 
 
   /**
@@ -345,16 +313,6 @@ export default function CreateDomain(name, options={}) {
     options.name = name;
   }
 
-  const eventSchema = (options.schemas || {}).event;
-  const commandSchema = (options.schemas || {}).command;
-
-  if (eventSchema && !isValidEventSchema(eventSchema)) {
-    throw new errors.ValidationError(`The injected event schema is not valid`);
-  }
-
-  if (commandSchema && !isValidEventSchema(commandSchema)) {
-    throw new errors.ValidationError(`The injected command schema is not valid`);
-  }
 
   const domain = Object.create(DomainPrototype);
 
@@ -365,8 +323,9 @@ export default function CreateDomain(name, options={}) {
   domain.services = {};
   domain.events = {};
   domain.commands = {};
-  domain.schemas = options.schemas || {};
   domain.name = options.name || path.basename(__dirname);
+  domain.commandSchema = options.commandSchema;
+  domain.eventSchema = options.eventSchema;
 
   if (options.events) domain.loadEventHandlers(options.events);
   if (options.commands) domain.loadCommandHandlers(options.commands);

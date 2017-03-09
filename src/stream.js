@@ -64,7 +64,7 @@ const Stream = {
     return this;
   },
 
-  
+
 
   getLatestVersion: function() {
     const snapshotVersion = (this.snapshot) ? this.snapshot.version : 0;
@@ -200,7 +200,10 @@ const Stream = {
    * Extends the meta property of all uncommitted events
    */
   extendEvents: function(ext={}) {
-    this.uncommittedEvents = this.uncommittedEvents.map(evt => evt.extendMeta(ext));
+    this.uncommittedEvents = this.uncommittedEvents.map(evt => {
+      evt.meta = Object.assign((evt.meta || {}), ext);
+      return evt;
+    });
     return this;
   }
 }
