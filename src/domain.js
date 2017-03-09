@@ -12,7 +12,7 @@ import CreateEvent from './event';
 import CreateTransaction from './transaction';
 import {ConfigurationError, ValidationError} from './errors';
 
-import CreateRegistry from './handlerRegistry';
+import {CreateRegistry} from './messageHandler';
 
 
 

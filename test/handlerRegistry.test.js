@@ -1,16 +1,16 @@
 import {expect} from 'chai';
-import createRegistry from '../src/handlerRegistry';
-import ValidationError from '../src/errors';
+import {CreateRegistry} from '../src/messageHandler';
+import {ValidationError} from '../src/messageHandler/errors';
 
 describe('handlerRegistry', () => {
   describe('creating a registry', () => {
     it('creates a valid registry', () => {
-      const reg = createRegistry();
+      const reg = CreateRegistry();
       expect(reg.messageRegistry).to.be.ok;
     })
 
     it('renames functions', () => {
-      const reg = createRegistry({messageType: 'bla'});
+      const reg = CreateRegistry({messageType: 'bla'});
       expect(reg.registerBlaHandler).to.be.a('function');
       expect(reg.registerBlaHandlers).to.be.a('function');
       expect(reg.blaRegistry).to.be.ok;
@@ -19,7 +19,7 @@ describe('handlerRegistry', () => {
 
   describe('registering a handler', () => {
     it('registers a valid handler', () => {
-      const reg = createRegistry();
+      const reg = CreateRegistry();
       const handler = {name: 'tester', version: 1, callback: () => {}};
 
       expect(reg.getMessageHandlers()).to.have.length(0);
@@ -28,7 +28,7 @@ describe('handlerRegistry', () => {
     })
 
     it('registers an array of valid handlers', () => {
-      const reg = createRegistry();
+      const reg = CreateRegistry();
       const handlers = [
         {name: 'tester1', version: 1, callback: () => {}},
         {name: 'tester2', version: 1, callback: () => {}},
@@ -42,7 +42,7 @@ describe('handlerRegistry', () => {
     })
 
     it('throws an error when required data is missing', () => {
-      const reg = createRegistry();
+      const reg = CreateRegistry();
       const willThrow1 = () => reg.loadMessageHandlers({name: 'noVersion'});
       const willThrow2 = () => reg.loadMessageHandlers({version: 123});
       expect(willThrow1).to.throw(ValidationError);
@@ -52,7 +52,7 @@ describe('handlerRegistry', () => {
 
   describe('getting a handler', () => {
     it("gets a specific version of a handler", () => {
-      const reg = createRegistry();
+      const reg = CreateRegistry();
       const handlers = [
         {name: 'tester', version: 1, value: 'a', callback: () => {}},
         {name: 'tester', version: 2, value: 'b', callback: () => {}},
@@ -66,7 +66,7 @@ describe('handlerRegistry', () => {
     })
 
     it("gets default handler via 'strict' strategy", () => {
-      const reg = createRegistry({defaultVersion: 'strict'});
+      const reg = CreateRegistry({defaultVersion: 'strict'});
       const handlers = [
         {name: 'tester', version: 1, value: 'a', callback: () => {}},
         {name: 'tester', version: 2, value: 'b', callback: () => {}},
@@ -79,7 +79,7 @@ describe('handlerRegistry', () => {
       expect(handler).to.not.be.ok;
     })
     it("gets default handler via 'latest-version' strategy", () => {
-      const reg = createRegistry({defaultVersion: 'latest-version'});
+      const reg = CreateRegistry({defaultVersion: 'latest-version'});
       const handlers = [
         {name: 'tester', version: 1, value: 'a', callback: () => {}},
         {name: 'tester', version: 2, value: 'b', callback: () => {}},
@@ -93,7 +93,7 @@ describe('handlerRegistry', () => {
       expect(handler.config.value).to.equal('d');
     })
     it("gets default handler via 'first-version' strategy", () => {
-      const reg = createRegistry({defaultVersion: 'first-version'});
+      const reg = CreateRegistry({defaultVersion: 'first-version'});
       const handlers = [
         {name: 'tester', version: 1, value: 'a', callback: () => {}},
         {name: 'tester', version: 2, value: 'b', callback: () => {}},
@@ -107,7 +107,7 @@ describe('handlerRegistry', () => {
       expect(handler.config.value).to.equal('a');
     })
     it("gets default handler via 'previous' strategy", () => {
-      const reg = createRegistry({defaultVersion: 'previous'});
+      const reg = CreateRegistry({defaultVersion: 'previous'});
       const handlers = [
         {name: 'tester', version: 1, value: 'a', callback: () => {}},
         {name: 'tester', version: 2, value: 'b', callback: () => {}},
@@ -121,7 +121,7 @@ describe('handlerRegistry', () => {
       expect(handler.config.value).to.equal('b');
     })
     it("gets default handler via 'next' strategy", () => {
-      const reg = createRegistry({defaultVersion: 'next'});
+      const reg = CreateRegistry({defaultVersion: 'next'});
       const handlers = [
         {name: 'tester', version: 1, value: 'a', callback: () => {}},
         {name: 'tester', version: 2, value: 'b', callback: () => {}},
@@ -141,7 +141,7 @@ describe('handlerRegistry', () => {
     it('aliases the version property', () => {
       const messageType = 'event';
       const versionProperty = 'eventVersion'
-      const reg = createRegistry({messageType, versionProperty});
+      const reg = CreateRegistry({messageType, versionProperty});
 
       expect(reg.getEventHandlers()).to.have.length(0);
 
@@ -155,7 +155,7 @@ describe('handlerRegistry', () => {
     it('aliases the NAME property', () => {
       const messageType = 'event';
       const nameProperty = 'type'
-      const reg = createRegistry({messageType, nameProperty});
+      const reg = CreateRegistry({messageType, nameProperty});
 
       expect(reg.getEventHandlers()).to.have.length(0);
 

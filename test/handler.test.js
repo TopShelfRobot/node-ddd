@@ -1,5 +1,5 @@
 import assert from 'assert';
-import CreateHandlerFactory from "../src/handler";
+import {CreateHandlerFactory} from "../src/messageHandler";
 
 
 describe("Message Handler", () => {

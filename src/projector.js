@@ -1,4 +1,4 @@
-import CreateRegistry from './handlerRegistry';
+import {CreateRegistry} from './messageHandler';
 
 const Projector = {
   project(...args) {

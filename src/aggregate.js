@@ -3,7 +3,7 @@ import uuid from 'node-uuid';
 import _isObject from 'lodash/isObject';
 import _isString from 'lodash/isString';
 import CreateProjector from './projector';
-import CreateRegistry from './handlerRegistry';
+import {CreateRegistry} from './messageHandler';
 import CreateEvent from './event';
 import DomainUser from './components/domainUser';
 import {isValidDomain} from './domain';
