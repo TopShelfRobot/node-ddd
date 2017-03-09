@@ -370,6 +370,7 @@ export default function CreateDomain(name, options={}) {
 
   if (options.events) domain.loadEventHandlers(options.events);
   if (options.commands) domain.loadCommandHandlers(options.commands);
+  if (options.commandSchema) domain.extendCommandSchema(options.commandSchema);
 
 
   return domain;
