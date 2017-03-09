@@ -10,12 +10,32 @@ import {isValidService} from './service';
 import CreateCommand from './command';
 import CreateEvent from './event';
 import CreateTransaction from './transaction';
-import {ValidationError} from './errors';
+import {ConfigurationError, ValidationError} from './errors';
 
 import CreateRegistry from './handlerRegistry';
 
-import eventSpecSchema from './domain/schemaEventSpec';
 
+
+
+const defaultCommandSchema = {
+  type: 'object',
+  properties: {
+    name   : {type: 'string'},
+    payload: {type: 'object'},
+    meta   : {type: 'object'},
+  },
+  required: ['name', 'payload', 'meta'],
+}
+
+const defaultEventSchema = {
+  type: 'object',
+  properties: {
+    name   : {type: 'string'},
+    payload: {type: 'object'},
+    meta   : {type: 'object'},
+  },
+  required: ['name', 'payload'],
+}
 
 
 // TV4 validation error:
@@ -101,32 +121,38 @@ const Domain = {
   },
 
   // ===========================================================================
-  // ==== EVENTS
+  // ==== VALIDATION
   // ===========================================================================
-
-
-
-
-
-
-  /**
-   * createEvent
-   * Creates a domain event after validating the arguments
-   * @param  {String} name    name of event
-   * @param  {Object} payload Payload of the event
-   * @param  {Object} meta    Metadata related to the event
-   * @return {event}         The created event
-   */
-  createEvent: function(name, payload, meta) {
-    // TODO: this is all fucked up
-    throw new Error('not implemented');
+  validateEventFormat(evt) {
+    const eventSchema = this.getSchema('event');
+    return (eventSchema)
+      ? validateAgainstSchema(evt, eventSchema)
+      : [];
   },
 
-
-  validateEvent: function(event) {
-
+  isValidEventSchema(eventSchema) {
+    return eventSchema
+      && eventSchema.type === 'object'
+      && eventSchema.properties
+      && eventSchema.properties.name
+      && eventSchema.properties.name.type === 'string'
+      && eventSchema.properties.payload
+      && eventSchema.properties.payload.type === 'object'
   },
-  // ---------------------------------------------------------------------------
+
+  isValidCommandSchema(commandSchema) {
+    return commandSchema
+      && commandSchema.type === 'object'
+      && commandSchema.properties
+      && commandSchema.properties.name
+      && commandSchema.properties.name.type === 'string'
+      && commandSchema.properties.aggregateId
+      && commandSchema.properties.aggregateId.type === 'string'
+      && commandSchema.properties.payload
+      && commandSchema.properties.payload.type === 'object'
+      && commandSchema.properties.meta
+      && commandSchema.properties.meta.type === 'object'
+  },
 
 
   /**
@@ -141,112 +167,108 @@ const Domain = {
    * @param  {Object} meta    Metadata about the command
    * @return {Command}        The Command
    */
-  createCommand: function(name, commandVersion, payload, meta) {
+  createCommand: function(name, commandVersion, props) {
     if (typeof commandVersion !== 'number') {
-      meta = payload;
-      payload = commandVersion;
+      props = commandVersion;
       commandVersion = null;
     }
 
-    meta = meta || {};
-    payload = payload || {};
+    props = props || {};
 
-    const nameValidationErrors =this.validateCommandName(name);
-    if (nameValidationErrors.length) {
-      throw new ValidationError('Error creating command', nameValidationErrors);
+    // Make sure the basics are present
+    const requiredOptions = ['aggregateId', 'payload']
+    const missingOptions = requiredOptions.filter(opt => !props[opt]);
+    if (missingOptions.length) {
+      throw new ConfigurationError(`Cannot create command: Missing ${missingOptions.join(', ')}`)
+    }
+
+    // Is this a command known to the domain?
+    if (!this.hasCommandHandler(name)) {
+      throw new ValidationError('Error creating command', `Command '${name}' is unknown to domain '${this.domain}'`);
     }
 
     // If missing a commandVersion, default to the current version
     // of the registered command handler
     commandVersion = commandVersion || this.getCommandVersion(name);
-
     const commandHandler = this.getCommandHandler({name, commandVersion});
 
+    // Does the payload validate against the command handler
+    const payloadSchema = commandHandler.payloadSchema;
+    const payloadValidation = validateAgainstSchema(props.payload, payloadSchema);
+    if (payloadValidation.length) {
+      throw new ValidationError(`Command '${name}' has an invalid payload`, payloadValidation);
+    }
+
     // Enhance the command meta object
-    meta = Object.assign({}, meta, {
-      domain        : this.name,
+    const payload = props.payload || {};
+    const aggregateId = props.aggregateId;
+    const meta = Object.assign({}, (props.meta || {}), {
+      domain        : {name: this.name},
       commandHandler: commandHandler,
       aggregateType : commandHandler.aggregateType,
     });
 
-
-
-    const validationErrors = [].concat(
-      this.validateCommandPayload(payload, commandHandler.schema),
-      this.validateCommandMeta(meta)
+    const command = Object.assign({},
+      props,
+      {name, commandVersion, aggregateId, payload, meta}
     );
 
-    if (validationErrors.length) {
-      throw new ValidationError('Validation Errors creating a command', validationErrors);
+
+    // User-defined schema validation
+    if (this.schemas.command) {
+      const commandValidation = validateAgainstSchema(command, this.schemas.command);
+      if (commandValidation.length) {
+        throw new ValidationError('Malformed command', commandValidation);
+      }
     }
 
-    return CreateCommand(name, commandVersion, payload, meta);
-  },
-
-  validateCommandFormat(command) {
-    const {name, commandVersion, payload, meta} = command;
-    if (!name || !meta || !meta.commandHandler) {
-      return [`Invalid command sent to domain ${this.name}`];
-    }
-
-    const {commandHandler} = meta;
-
-    return [].concat(
-      this.validateCommandName(name),
-      this.validateCommandPayload(payload, commandHandler.schema),
-      this.validateCommandMeta(meta)
-    );
-  },
-
-  validateCommandName(name) {
-    const validationErrors = [];
-
-    if (!this.hasCommandHandler(name)) {
-      validationErrors.push(`Unknown command sent to domain '${this.name}': '${name}'`);
-    }
-
-    return validationErrors
-  },
-
-  validateCommandPayload(payload, schema) {
-    return validateAgainstSchema(payload, schema);
-  },
-
-  validateCommandMeta(meta) {
-    return (this.schemas.commandMeta)
-      ? validateAgainstSchema(meta, this.schemas.commandMeta)
-      : [];
+    return command;
   },
 
 
+  /**
+   * Execute a command
+   * @param  {[type]} command [description]
+   * @param  {[type]} options [description]
+   * @return {[type]}         [description]
+   */
   execute: function(command, options) {
     options = options || {};
 
     return Promise.resolve()
       //
-      // validate the command
+      // Create or get the transaction
       //
-      .then(() => {
-        const validationErrors = this.validateCommandFormat(command);
-        if (validationErrors.length) {
-          throw new ValidationError('Validation Errors executing a command', validationErrors);
-        }
-      })
-      //
-      // Create the transaction
-      //
-      .then(() => (options.transaction) ? options.transaction : this.createTransaction(options) )
+      .then(() => (options.transaction) ? options.transaction : this.createTransaction({autoCommit: true}) )
       //
       // Execute the command
       //
       .then(transaction => {
-        const commandHandler = command.meta.commandHandler;
+        const aggregateType = command.meta.aggregateType;
+        const aggregateId = command.aggregateId;
+        const aggregate = this.getAggregate(aggregateType);
+        const domainMeta = {domain: command.meta.domain || {}};
 
-        if (commandHandler.aggregateType) {
-          return this.executeDefaultCommand(command, transaction);
-        } else {
-          return this.executeCustomCommand(command, transaction);
+        if (!this.repository) {
+          throw new Error(`Missing a repository.  Use domain.useRepository() first`);
         }
+
+        return Promise.resolve()
+          // Get the aggregate stream from the repository
+          .then(() => this.repository.get(aggregateId, aggregate) )
+          // Lock the aggregate from editing by another user
+          .tap(stream => transaction.lock(aggregateId))
+          // Execute the command on the aggregate
+          .then(stream => aggregate.execute(command, stream) )
+          // Add the domain meta to each event in the stram (returns stream);
+          .then(newStream => newStream.extendEvents(domainMeta))
+          // add the stream to the transaction
+          .then(newStream => transaction.addStream(newStream) )
+          .catch(err => {
+            transaction.cancel(err);
+            throw err;
+          });
+
       })
       //
       // Commit if autocommit is set
@@ -259,76 +281,12 @@ const Domain = {
         }
       })
 
-
-
-
-
   },
 
-  /**
-   * executeDefaultCommand
-   *
-   * Exectues the default command handler, which loads an aggregate and
-   * passes the command to be handled by that aggregate
-   *
-   * @param  {Command} command     The command to execute
-   * @param  {Transaction} transaction Domain Transaction
-   * @return {Transaction}             The resulting transaction
-   */
-  executeDefaultCommand: function(command, transaction) {
-    const aggregateType = command.meta.aggregateType;
-    const aggregateId = command.meta.aggregateId;
-    const aggregate = this.getAggregate(aggregateType);
 
-    const domainMeta = {
-      domain: {name: this.name},
-    };
-
-    // Basic workflow
-    return Promise.resolve()
-      // Sanity checks (Are they needed?)
-      .then(() => {
-        if (!aggregate) {
-          throw new Error(`Default Command Execution: Unknown aggregate type: ${aggregateType}`);
-        }
-
-        if (!this.repository) {
-          throw new Error(`Missing a repository.  Use domain.useRepository() first`);
-        }
-      })
-      // Get the aggregate stream from the repository
-      .then(() => this.repository.get(aggregateId, aggregate) )
-      // Lock the aggregate from editing by another user
-      .tap(stream => transaction.lock(aggregateId))
-      // Execute the command on the aggregate
-      .then(stream => aggregate.execute(command, stream) )
-      // Add the domain meta to each event in the stram (returns stream);
-      .then(newStream => newStream.extendEvents(domainMeta))
-      // add the stream to the transaction
-      .then(newStream => transaction.addStream(newStream) )
-      .catch(err => {
-        transaction.cancel(err);
-        throw err;
-      })
-  },
-
-  executeCustomCommand: function(command, transaction) {
-    return Promise.resolve( command.meta.commandHandler )
-      .then(commandHandler => {
-        if (typeof commandHandler.callback !== 'function') {
-          throw new Error(`Custom command '${command.name}' is missing a callback function`);
-        }
-        return commandHandler;
-      })
-      .then(commandHandler => commandHandler.callback(command, transaction))
-      .catch(err => {
-        transaction.cancel(err);
-        throw err;
-      })
-  },
 
   createTransaction: function(options) {
-    return CreateTransaction(this, {options});
+    return CreateTransaction(this, options);
   },
   // ---------------------------------------------------------------------------
 
@@ -367,10 +325,9 @@ const Domain = {
 
     return service;
   },
-  // ---------------------------------------------------------------------------
 
   // ===========================================================================
-  // ==== DEPENDENCY INVERSION
+  // ==== DEPENDENCY INJECTION
   // ===========================================================================
   useRepository: function(repository) {
     if (!isValidRepository(repository)) {
@@ -389,7 +346,7 @@ const Domain = {
   usePublisher: function(publisher) {
     this.publisher = publisher
   },
-  // ---------------------------------------------------------------------------
+
   init() {
     return Promise.resolve(this);
   },
@@ -413,6 +370,17 @@ export default function CreateDomain(name, options={}) {
     options.name = name;
   }
 
+  const eventSchema = (options.schemas || {}).event;
+  const commandSchema = (options.schemas || {}).command;
+
+  if (eventSchema && !isValidEventSchema(eventSchema)) {
+    throw new errors.ValidationError(`The injected event schema is not valid`);
+  }
+
+  if (commandSchema && !isValidEventSchema(commandSchema)) {
+    throw new errors.ValidationError(`The injected command schema is not valid`);
+  }
+
   const domain = Object.create(DomainPrototype);
 
   domain.repository = null;
@@ -422,7 +390,7 @@ export default function CreateDomain(name, options={}) {
   domain.services = {};
   domain.events = {};
   domain.commands = {};
-  domain.schemas = {};
+  domain.schemas = options.schemas || {};
   domain.name = options.name || path.basename(__dirname);
 
   if (options.events) domain.loadEventHandlers(options.events);

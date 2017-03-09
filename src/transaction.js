@@ -29,8 +29,6 @@ TState.initEnum([
 
 const Transaction = {
   addStream(stream) {
-
-
     this.uncommittedStreams.push(stream);
     return this;
   },
@@ -203,7 +201,7 @@ export default function CreateTransaction(domain, options={}) {
     uncommittedStreams: [],
     streams           : [],
     locks             : [],
-    autoCommit        : true,
+    autoCommit        : false,
     timeout           : 4000,
   }
 

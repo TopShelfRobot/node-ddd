@@ -19,13 +19,14 @@ describe("Example App", () => {
 
   describe("Creating an invoice", () => {
     it("creates the invoice without error", done => {
+      const aggregateId = 'abx';
       const payload = {
         lineItems: [
           {description: 'Something Special', total: 100},
           {description: 'Something Normal', total: 200},
         ]
       }
-      const cmd = domain.createCommand('createInvoice', payload);
+      const cmd = domain.createCommand('createInvoice', {aggregateId, payload});
       domain.execute(cmd)
         .then(() => done())
         .catch(err => done(err))

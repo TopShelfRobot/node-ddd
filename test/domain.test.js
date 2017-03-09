@@ -33,7 +33,11 @@ describe('Domain', () => {
     });
 
     it('creates a valid command', () => {
-      const cmd = domain.createCommand('test1', 1, {a:1}, {b:2});
+      const cmd = domain.createCommand('test1', 1, {
+        aggregateId: 'abc',
+        payload: {a:1},
+        meta: {b:2}
+      });
       expect(cmd).to.be.ok;
       expect(cmd.name).to.equal('test1');
       expect(cmd.commandVersion).to.equal(1);
@@ -42,12 +46,77 @@ describe('Domain', () => {
     });
 
     it('commandVersion defaults to the most recent version', () => {
-      const cmd = domain.createCommand('test2', {a:1}, {b:2});
+      const cmd = domain.createCommand('test2', {
+        aggregateId: 'abc',
+        payload: {a:1},
+        meta: {b:2}
+      });
+
       expect(cmd).to.be.ok;
       expect(cmd.commandVersion).to.equal(2);
     })
 
   })
 
-  
+
+  describe("schemas", () => {
+    it('validates a valid event schema', () => {
+      const schema = {
+        type: 'object',
+        properties: {
+          name   : {type: 'string'},
+          payload: {type: 'object'},
+        }
+      }
+
+      const domain = CreateDomain('tester');
+      assert.ok(domain.isValidEventSchema(schema));
+    })
+
+    it('catches invalid event schemas', () => {
+      const domain = CreateDomain('tester');
+      const schema = { type: 'object', properties: {
+          name   : {type: 'string'},
+          payload: {type: 'object'},
+        }
+      }
+
+      assert.ok(!domain.isValidEventSchema({
+        type: 'object',
+        properties: {
+          // name   : {type: 'string'},
+          payload: {type: 'object'},
+        }
+      }), 'Missing Name');
+
+      assert.ok(!domain.isValidEventSchema({
+        type: 'object',
+        properties: {
+          name   : {type: 'string'},
+          // payload: {type: 'object'},
+        }
+      }), 'Missing Payload');
+
+      assert.ok(!domain.isValidEventSchema({
+        type: 'object',
+        properties: {
+          name   : {type: 'number'},
+          payload: {type: 'object'},
+        }
+      }), 'Wrong Type of name');
+
+      assert.ok(!domain.isValidEventSchema({
+        type: 'object',
+        properties: {
+          name   : {type: 'string'},
+          payload: {type: 'number'},
+        }
+      }), 'Wrong Type of payload');
+
+
+
+    })
+  })
+
+
 });

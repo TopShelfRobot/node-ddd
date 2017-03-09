@@ -77,7 +77,6 @@ const Aggregate = {
     eventVersion = eventVersion || this.getEventVersion(name);
 
     // TODO: Add some event validation here
-
     return CreateEvent(name, eventVersion, payload, meta);
   },
 
