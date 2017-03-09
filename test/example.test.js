@@ -26,7 +26,8 @@ describe("Example App", () => {
           {description: 'Something Normal', total: 200},
         ]
       }
-      const cmd = domain.createCommand('createInvoice', {aggregateId, payload});
+      const meta = {};
+      const cmd = domain.createCommand('createInvoice', {aggregateId, payload, meta});
       domain.execute(cmd)
         .then(() => done())
         .catch(err => done(err))

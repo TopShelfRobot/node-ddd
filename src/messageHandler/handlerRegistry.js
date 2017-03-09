@@ -1,6 +1,8 @@
 import _capitalize from 'lodash/capitalize';
+import _difference from 'lodash/difference';
 import CreateHandlerFactory from './handler';
 import {ValidationError} from './errors';
+import validateAgainstSchema from './validate';
 
 
 function loadFromPathOrArray(pa) {
@@ -156,6 +158,54 @@ const Registry = {
 
   extractName(obj) {
     return obj[this.nameProperty];
+  },
+
+  extendSchema(schema) {
+    this.schemas.push(schema);
+  },
+
+  getSchema(additionalSchemas) {
+    additionalSchemas = additionalSchemas || [];
+    additionalSchemas = (Array.isArray(additionalSchemas)) ? additionalSchemas : [additionalSchemas];
+
+    return {
+      type: 'object',
+      allOf: this.schemas.concat(additionalSchemas),
+    }
+  },
+
+  validateMessage(message, additionalSchemas) {
+    const schema = this.getSchema(additionalSchemas);
+    return validateAgainstSchema(message, schema);
+  },
+
+
+  createMessage(name, version, props) {
+    if (typeof version !== 'number') {
+      props = version;
+      version = null;
+    }
+
+    props = props || {};
+
+    // Is this a message known to the registry?
+    if (!this.hasHandler(name)) {
+      throw new ValidationError(`Error creating ${this.text.messageType}`, `${this.text.caitalized} '${name}' is unknown`);
+    }
+
+    const message = Object.assign({}, props, {
+      [this.nameProperty]: name,
+      [this.versionProperty]: version || this.getVersion(name),
+    });
+
+    const handler = this.getHandler(message);
+    const validationErrors = this.validateMessage(message, handler.schema);
+    
+    if (validationErrors.length) {
+      throw new ValidationError(`Malformed ${this.text.messageType}`, validationErrors);
+    }
+
+    return message;
   }
 }
 
@@ -179,7 +229,6 @@ export default function createRegistry(options={}) {
     ? options.defaultVersion
     : 'previous'
 
-
   const handlerFactory = CreateHandlerFactory({
     messageType     : messageType,
     versionProperty : options.versionProperty,
@@ -194,6 +243,7 @@ export default function createRegistry(options={}) {
     nameProperty    : options.nameProperty || 'name',
     handlers        : {},
     currentVersions : {},
+    schemas         : (options.schema) ? [options.schema] : [],
     handlerFactory  : handlerFactory,
   });
 
@@ -208,6 +258,10 @@ export default function createRegistry(options={}) {
     [`get${capitalized}Handler`]      : (...args) => inner.getHandler.apply(inner, args),
     [`has${capitalized}Handler`]      : (...args) => inner.hasHandler.apply(inner, args),
     [`get${capitalized}Version`]      : (...args) => inner.getVersion.apply(inner, args),
+    [`get${capitalized}Schema`]      : (...args) => inner.getSchema.apply(inner, args),
+    [`extend${capitalized}Schema`]      : (...args) => inner.extendSchema.apply(inner, args),
+    [`create${capitalized}`]      : (...args) => inner.createMessage.apply(inner, args),
+    [`validate${capitalized}`]      : (...args) => inner.validateMessage.apply(inner, args),
   };
 
   return registry;

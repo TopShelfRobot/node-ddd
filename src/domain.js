@@ -17,15 +17,6 @@ import {CreateRegistry} from './messageHandler';
 
 
 
-const defaultCommandSchema = {
-  type: 'object',
-  properties: {
-    name   : {type: 'string'},
-    payload: {type: 'object'},
-    meta   : {type: 'object'},
-  },
-  required: ['name', 'payload', 'meta'],
-}
 
 const defaultEventSchema = {
   type: 'object',
@@ -168,59 +159,19 @@ const Domain = {
    * @return {Command}        The Command
    */
   createCommand: function(name, commandVersion, props) {
-    if (typeof commandVersion !== 'number') {
-      props = commandVersion;
-      commandVersion = null;
-    }
+    const command = this.commandRegistry.createMessage(name, commandVersion, props);
 
-    props = props || {};
+    // Extend the command.meta object with domain-specific informaiton
+    const commandHandler = this.getCommandHandler(command);
 
-    // Make sure the basics are present
-    const requiredOptions = ['aggregateId', 'payload']
-    const missingOptions = requiredOptions.filter(opt => !props[opt]);
-    if (missingOptions.length) {
-      throw new ConfigurationError(`Cannot create command: Missing ${missingOptions.join(', ')}`)
-    }
-
-    // Is this a command known to the domain?
-    if (!this.hasCommandHandler(name)) {
-      throw new ValidationError('Error creating command', `Command '${name}' is unknown to domain '${this.domain}'`);
-    }
-
-    // If missing a commandVersion, default to the current version
-    // of the registered command handler
-    commandVersion = commandVersion || this.getCommandVersion(name);
-    const commandHandler = this.getCommandHandler({name, commandVersion});
-
-    // Does the payload validate against the command handler
-    const payloadSchema = commandHandler.payloadSchema;
-    const payloadValidation = validateAgainstSchema(props.payload, payloadSchema);
-    if (payloadValidation.length) {
-      throw new ValidationError(`Command '${name}' has an invalid payload`, payloadValidation);
-    }
-
-    // Enhance the command meta object
-    const payload = props.payload || {};
-    const aggregateId = props.aggregateId;
-    const meta = Object.assign({}, (props.meta || {}), {
-      domain        : {name: this.name},
-      commandHandler: commandHandler,
-      aggregateType : commandHandler.aggregateType,
-    });
-
-    const command = Object.assign({},
-      props,
-      {name, commandVersion, aggregateId, payload, meta}
-    );
-
-
-    // User-defined schema validation
-    if (this.schemas.command) {
-      const commandValidation = validateAgainstSchema(command, this.schemas.command);
-      if (commandValidation.length) {
-        throw new ValidationError('Malformed command', commandValidation);
+    command.meta = Object.assign({},
+      command.meta,
+      {
+        domain        : {name: this.name},
+        commandHandler: commandHandler,
+        aggregateType : commandHandler.aggregateType,
       }
-    }
+    );
 
     return command;
   },
@@ -357,9 +308,33 @@ const Domain = {
 }
 
 
-const EventRegistry = CreateRegistry({messageType: 'event', versionProperty: 'eventVersion'});
-const CommandRegistry = CreateRegistry({messageType: 'command', versionProperty: 'commandVersion'});
-const DomainPrototype = Object.assign({}, Domain, EventRegistry, CommandRegistry);
+const EventRegistry = CreateRegistry({
+  messageType: 'event',
+  versionProperty: 'eventVersion',
+  schema: {
+    type: 'object',
+    properties: {
+      name   : {type: 'string'},
+      payload: {type: 'object'},
+      meta   : {type: 'object'},
+    },
+    required: ['name', 'payload'],
+  }
+});
+const CommandRegistry = CreateRegistry({
+  messageType: 'command',
+  versionProperty: 'commandVersion',
+  schema: {
+    type: 'object',
+    properties: {
+      name   : {type: 'string'},
+      payload: {type: 'object'},
+      meta   : {type: 'object'},
+    },
+    required: ['name', 'payload', 'meta'],
+  }
+});
+const DomainPrototype = Object.assign({}, EventRegistry, CommandRegistry, Domain);
 
 
 

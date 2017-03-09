@@ -1,3 +1,4 @@
+import assert from 'assert';
 import {expect} from 'chai';
 import {CreateRegistry} from '../src/messageHandler';
 import {ValidationError} from '../src/messageHandler/errors';
@@ -41,13 +42,6 @@ describe('handlerRegistry', () => {
 
     })
 
-    it('throws an error when required data is missing', () => {
-      const reg = CreateRegistry();
-      const willThrow1 = () => reg.loadMessageHandlers({name: 'noVersion'});
-      const willThrow2 = () => reg.loadMessageHandlers({version: 123});
-      expect(willThrow1).to.throw(ValidationError);
-      expect(willThrow2).to.throw(ValidationError);
-    });
   })
 
   describe('getting a handler', () => {
@@ -166,5 +160,56 @@ describe('handlerRegistry', () => {
       reg.loadEventHandler({type: 'evt1', version: 1, callback: () => {}});
       expect(reg.getEventHandlers()).to.have.length(1);
     })
+  })
+
+  describe('message Schema definition', () => {
+    it("defaults to a simple schema", () => {
+      const reg = CreateRegistry();
+      const expected = { type: 'object', allOf: [] };
+
+      assert.deepEqual(reg.getMessageSchema(), expected);
+    })
+
+    it("extends the schema at construction", () => {
+      const schema = {properties: {prop1: {type: 'string'}}}
+      const reg = CreateRegistry({schema});
+      const expected = { type: 'object', allOf: [schema] };
+
+      assert.deepEqual(reg.getMessageSchema(), expected);
+    })
+
+    it("extends the schema at runtime", () => {
+      const schema = {properties: {prop1: {type: 'string'}}}
+      const schema2 = {properties: {prop2: {type: 'string'}}}
+      const reg = CreateRegistry({schema});
+      const expected = { type: 'object', allOf: [schema] };
+      const expected2 = { type: 'object', allOf: [schema, schema2] };
+
+      assert.deepEqual(reg.getMessageSchema(), expected);
+      reg.extendMessageSchema(schema2)
+      assert.deepEqual(reg.getMessageSchema(), expected2);
+    })
+
+    describe("validating message", () => {
+      const baseSchema = {
+        properties: {
+          name: {type: 'string'},
+          age: {type: 'number'},
+        },
+        required: ['name']
+      }
+
+      it("validates against a schema", () => {
+        const reg = CreateRegistry({schema: baseSchema});
+        const good = {name: 'test', age: 123};
+        const wrongType = {name: 'test', age: '123'};
+        const missingName = {age: 123};
+
+        assert.equal(reg.validateMessage(good).length, 0);
+        assert.equal(reg.validateMessage(wrongType).length, 1);
+        assert.equal(reg.validateMessage(missingName).length, 1);
+      })
+    })
+
   })
 })
