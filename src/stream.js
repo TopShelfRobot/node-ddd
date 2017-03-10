@@ -144,14 +144,14 @@ const Stream = {
   },
 
   getCurrentState: function() {
-    if (this.snapshot && this.snapshot.state) {
-      return _cloneDeep(this.snapshot.state);
-    } else {
-      return {
-        aggregateId: this.aggregateId,
-        aggregateType: this.aggregateType,
-      };
+    const initialState = {
+      aggregateId: this.aggregateId,
+      aggregateType: this.aggregateType,
     }
+
+    return (this.snapshot && this.snapshot.state)
+      ? Object.assign({}, initialState, _cloneDeep(this.snapshot.state));
+      : initialState;
   },
 
   /**
