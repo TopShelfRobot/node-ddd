@@ -76,15 +76,11 @@ export default function CreateHandlerFactory(options={}) {
     Object.assign(handler, {
       messageType, capitalMessageType, versionProperty, nameProperty,
       config,
-      payloadSchema                    : {type: 'object'},
+      schema                           : config.schema,
       [nameProperty]                   : config[nameProperty],
       [versionProperty]                : config[versionProperty],
       [`validate${capitalMessageType}`]: handler._validateMessage.bind(handler),
     })
-
-    if (config.schema) {
-      handler.payloadSchema = Object.assign(handler.payloadSchema, config.schema);
-    }
 
     const validationErrors = handler.validateConfig(config);
     if (validationErrors.length) {

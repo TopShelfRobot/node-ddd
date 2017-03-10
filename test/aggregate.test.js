@@ -35,6 +35,36 @@ describe("Aggregate", () => {
       assert.deepEqual(evt.meta, {});
     })
 
+    it("adds the event schema to the validation step", () => {
+      const events = [{
+        name: 'extra-validation',
+        eventVersion: 1,
+        callback: () => {},
+        schema: {
+          properties: {
+            payload: {
+              properties: {
+                secret: {type: 'string'}
+              },
+              required: ['secret']
+            }
+          }
+        }
+      }];
+      const payload = {secret: 'prop'};
+      const agg = CreateAggregate('testAgg', {events});
+
+      const evt = agg.createEvent('extra-validation', {payload});
+      const willThrow = () => agg.createEvent('extra-validation');
+
+      assert.equal(evt.name, 'extra-validation');
+      assert.equal(evt.eventVersion, 1);
+      assert.deepEqual(evt.payload, payload);
+      assert.deepEqual(evt.meta, {});
+      assert.throws(willThrow);
+
+    })
+
   })
 
 
