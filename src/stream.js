@@ -150,7 +150,7 @@ const Stream = {
     }
 
     return (this.snapshot && this.snapshot.state)
-      ? Object.assign({}, initialState, _cloneDeep(this.snapshot.state));
+      ? Object.assign({}, initialState, _cloneDeep(this.snapshot.state))
       : initialState;
   },
 
