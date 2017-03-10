@@ -70,7 +70,7 @@ describe("Normalizer", () => {
     });
   });
 
-  describe("denormalizes a record", () => {
+  describe.only("denormalizes a record", () => {
     it("denormalizes a record with deeply nested props", () => {
       const record = {
         prop_1: 'val1',

@@ -65,7 +65,7 @@ const Aggregate = {
 
 
   createEvent(name, eventVersion, props) {
-    if (typeof eventVersion !== 'number') {
+    if (_isObject(eventVersion)) {
       props = eventVersion;
       eventVersion = null;
     }

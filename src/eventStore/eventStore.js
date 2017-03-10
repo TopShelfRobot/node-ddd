@@ -48,7 +48,7 @@ const EventStore = {
   getEvents(aggregateId, postVersion=0) {
     return Promise.resolve()
       .then(() => this.strategy.getEvents(aggregateId, postVersion))
-      .then(records => records.map(rec => this.denormalize(rec)) );
+      .then(records => records.map(rec => this.denormalize('event', rec)) );
   },
 
 
