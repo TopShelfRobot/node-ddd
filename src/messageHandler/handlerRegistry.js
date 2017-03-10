@@ -1,5 +1,6 @@
 import _capitalize from 'lodash/capitalize';
 import _difference from 'lodash/difference';
+import _isObject from 'lodash/isObject';
 import CreateHandlerFactory from './handler';
 import {ValidationError} from './errors';
 import validateAgainstSchema from './validate';
@@ -181,7 +182,7 @@ const Registry = {
 
 
   createMessage(name, version, props) {
-    if (typeof version !== 'number') {
+    if (_isObject(version)) {
       props = version;
       version = null;
     }

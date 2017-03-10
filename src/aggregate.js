@@ -70,6 +70,8 @@ const Aggregate = {
       eventVersion = null;
     }
 
+    props = props || {};
+
     props = Object.assign({}, (props || {}), {
       payload: props.payload || {},
       meta: props.meta || {},

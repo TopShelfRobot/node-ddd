@@ -81,7 +81,7 @@ const Stream = {
   addEvent: function(evt) {
 
     const nextVersion = this.expectedNextVersion();
-    evt.version = evt.version || nextVersion;
+    evt.version = (evt.version && evt.version > 0) ? evt.version : nextVersion;
 
     if (evt.version != nextVersion) {
       throw new Error(`Event version mismatch: expected version ${nextVersion}, got version ${evt.version}`);

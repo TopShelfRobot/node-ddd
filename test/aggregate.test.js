@@ -27,6 +27,14 @@ describe("Aggregate", () => {
       expect(evt.meta.b).to.equal(2);
     })
 
+    it("creates an event with no props", () => {
+      const evt = agg.createEvent('test1');
+      assert.equal(evt.name, 'test1');
+      assert.equal(evt.eventVersion, 1);
+      assert.deepEqual(evt.payload, {});
+      assert.deepEqual(evt.meta, {});
+    })
+
   })
 
 
