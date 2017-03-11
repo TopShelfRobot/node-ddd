@@ -22,6 +22,14 @@ const Aggregate = {
     return uuid.v4();
   },
 
+
+  project(stream) {
+    const {aggregateId, aggregateType} = stream;
+    const finalState = this.projectStream(stream);
+
+    return Object.assign(finalState, {aggregateId, aggregateType});
+  },
+
   /**
    * Executes a command on an aggregate,
    * adds those events to the aggregate stream,

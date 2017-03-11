@@ -1,6 +1,7 @@
 import assert from 'assert';
 import {expect} from 'chai';
 import CreateAggregate from '../src/aggregate';
+import CreateStream from '../src/stream';
 
 describe("Aggregate", () => {
   describe("createEvent()", () => {
@@ -80,5 +81,54 @@ describe("Aggregate", () => {
 
   })
 
+  describe("Projecting events", () => {
+    it("maintains aggregateId and aggregateType when event removes them", () => {
+      const events = [{
+        name: 'erase',
+        eventVersion: 1,
+        callback: (evt, state, agg) => ({oops: "no aggId or aggType"}),
+      }];
+      const aggregateType = 'abc';
+      const aggregateId = 'def';
+      const stream = CreateStream({aggregateType, aggregateId});
+      const agg = CreateAggregate('testAgg', {events});
+
+      stream.addEvents( agg.createEvent('erase') );
+
+      const currentState = stream.getCurrentState();
+      assert.equal(currentState.aggregateId, aggregateId);
+      assert.equal(currentState.aggregateType, aggregateType);
+
+      const newState = agg.project(stream);
+      assert.equal(newState.aggregateId, aggregateId);
+      assert.equal(newState.aggregateType, aggregateType);
+
+    })
+    it("maintains aggregateId and aggregateType when event changes them them", () => {
+      const events = [{
+        name: 'erase',
+        eventVersion: 1,
+        callback: (evt, state, agg) => ({
+          aggregateId: 'yes',
+          aggregateType: 'no'
+        }),
+      }];
+      const aggregateType = 'abc';
+      const aggregateId = 'def';
+      const stream = CreateStream({aggregateType, aggregateId});
+      const agg = CreateAggregate('testAgg', {events});
+
+      stream.addEvents( agg.createEvent('erase') );
+
+      const currentState = stream.getCurrentState();
+      assert.equal(currentState.aggregateId, aggregateId);
+      assert.equal(currentState.aggregateType, aggregateType);
+
+      const newState = agg.project(stream);
+      assert.equal(newState.aggregateId, aggregateId);
+      assert.equal(newState.aggregateType, aggregateType);
+
+    })
+  })
 
 })
