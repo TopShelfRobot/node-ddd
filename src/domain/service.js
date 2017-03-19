@@ -1,5 +1,5 @@
 import _isObject from 'lodash/isObject';
-import DomainUser from './components/domainUser';
+import DomainUser from '../components/domainUser';
 
 
 export default function CreateService(name, methods={}, options={}) {

@@ -4,15 +4,15 @@ import tv4 from 'tv4';
 import uuid from 'node-uuid';
 import Promise from 'bluebird';
 import _isObject from 'lodash/isObject';
-import CreateAggregate, {isValidAggregate} from './aggregate';
-import {isValidRepository} from './repository';
+import CreateAggregate, {isValidAggregate} from '../aggregate';
+import {isValidRepository} from '../repository';
 import {isValidService} from './service';
-import CreateCommand from './command';
-import CreateEvent from './event';
-import CreateTransaction from './transaction';
-import {ConfigurationError, ValidationError} from './errors';
+import CreateCommand from '../command';
+import CreateEvent from '../event';
+import CreateTransaction from '../transaction';
+import {ConfigurationError, ValidationError} from '../errors';
 
-import {CreateRegistry} from './messageHandler';
+import {CreateRegistry} from '../messageHandler';
 
 
 
@@ -330,6 +330,8 @@ export default function CreateDomain(name, options={}) {
   if (options.events) domain.loadEventHandlers(options.events);
   if (options.commands) domain.loadCommandHandlers(options.commands);
   if (options.commandSchema) domain.extendCommandSchema(options.commandSchema);
+  if (options.publisher) domain.usePublisher(options.publisher);
+  if (options.repository) domain.useRepository(options.repository);
 
 
   return domain;
